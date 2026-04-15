@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>互动工具 · 心光宇宙</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=LXGW+WenKai&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/tools.css">
+    <style>
+        /* ===== PREMIUM TOOLS PAGE v2 ===== */
+
+        /* Floating ambient orbs */
+        .ambient-orb {
+            position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+            filter: blur(80px); opacity: 0.08;
+        }
+        .ambient-orb-1 {
+            width: 400px; height: 400px; top: -100px; right: -100px;
+            background: radial-gradient(circle, #c9a84c, transparent);
+            animation: orbFloat1 20s ease-in-out infinite;
+        }
+        .ambient-orb-2 {
+            width: 300px; height: 300px; bottom: 10%; left: -80px;
+            background: radial-gradient(circle, #a87828, transparent);
+            animation: orbFloat2 25s ease-in-out infinite;
+        }
+        .ambient-orb-3 {
+            width: 250px; height: 250px; top: 40%; right: 5%;
+            background: radial-gradient(circle, #e0c868, transparent);
+            animation: orbFloat3 18s ease-in-out infinite;
+        }
+        @keyframes orbFloat1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-40px,60px)} }
+        @keyframes orbFloat2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(50px,-40px)} }
+        @keyframes orbFloat3 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(-30px,30px)} 66%{transform:translate(20px,-20px)} }
+
+        /* Hero */
+        .tools-hero {
+            text-align: center; padding: 0.8rem 2rem 0;
+            position: relative; z-index: 1;
+        }
+        .tools-hero .phase-label {
+            font-family: var(--font-mono); font-size: 0.6rem;
+            letter-spacing: 0.3em; color: var(--color-muted);
+            margin-bottom: 0.4rem; display: block;
+        }
+        .tools-hero h1 {
+            font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.6rem);
+            margin-bottom: 0.3rem;
+            background: linear-gradient(135deg, #f0d060 0%, #e0c060 25%, #c89030 50%, #a87828 75%, #c8a040 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: goldShimmer 6s ease-in-out infinite;
+            filter: drop-shadow(0 2px 8px rgba(201, 168, 76, 0.2));
+        }
+        @keyframes goldShimmer {
+            0%,100%{background-position:0% 50%} 50%{background-position:100% 50%}
+        }
+        .tools-hero .tools-subtitle {
+            font-family: var(--font-serif); font-size: 0.85rem;
+            color: var(--color-text-secondary); letter-spacing: 0.12em; margin-bottom: 0.4rem;
+        }
+        .tools-hero .tools-divider {
+            width: 60px; height: 1px; margin: 0.6rem auto 0;
+            background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+            position: relative;
+        }
+        .tools-hero .tools-divider::after {
+            content: '◆'; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.5rem; color: var(--color-gold);
+            background: var(--bg-primary); padding: 0 8px;
+        }
+
+        /* Stats row */
+        .tools-stats { display: none; }
+        .tools-stat { text-align: center; position: relative; }
+        .tools-stat::after {
+            content: ''; position: absolute; right: -1.75rem; top: 50%;
+            transform: translateY(-50%);
+            width: 1px; height: 30px;
+            background: linear-gradient(180deg, transparent, rgba(201,168,76,0.2), transparent);
+        }
+        .tools-stat:last-child::after { display: none; }
+        .tools-stat-num {
+            font-family: var(--font-mono); font-size: 1.6rem; font-weight: 500;
+            background: linear-gradient(135deg, #e0c868, #c8a040);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .tools-stat-label {
+            font-size: 0.68rem; color: var(--color-muted); letter-spacing: 0.18em; margin-top: 0.3rem;
+        }
+
+        /* Tab nav - 2x2 grid cards */
+        .tab-nav-upgrade {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;
+            margin: 1.2rem auto 0; max-width: 500px; width: calc(100% - 3rem);
+            position: relative; z-index: 1;
+        }
+        .tab-btn-upgrade {
+            padding: 1.5rem 1rem; border-radius: 20px;
+            background: rgba(14, 14, 35, 0.5);
+            border: 1px solid rgba(201, 168, 76, 0.08);
+            backdrop-filter: blur(20px);
+            color: var(--color-text-secondary);
+            font-family: var(--font-sans); font-size: 0.85rem; font-weight: 500;
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+            position: relative;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        }
+        .tab-btn-upgrade .tab-icon {
+            font-size: 1.5rem; transition: all 0.4s;
+            filter: grayscale(0.3) opacity(0.7);
+        }
+        .tab-btn-upgrade .tab-label { font-size: 0.82rem; letter-spacing: 0.1em; }
+        .tab-btn-upgrade .tab-en {
+            font-family: var(--font-mono); font-size: 0.55rem;
+            color: var(--color-muted); letter-spacing: 0.08em; opacity: 0.5;
+        }
+        .tab-btn-upgrade:hover {
+            border-color: rgba(201, 168, 76, 0.2);
+            background: rgba(201, 168, 76, 0.06);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .tab-btn-upgrade:hover .tab-icon {
+            filter: grayscale(0) opacity(1);
+            transform: scale(1.1);
+        }
+        .tab-btn-upgrade.active {
+            background: rgba(201, 168, 76, 0.08);
+            border-color: rgba(201, 168, 76, 0.2);
+            color: var(--color-accent-bright);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), 0 0 16px rgba(201, 168, 76, 0.08);
+        }
+        .tab-btn-upgrade.active .tab-icon {
+            transform: scale(1.1);
+            filter: grayscale(0) opacity(1);
+        }
+        .tab-btn-upgrade.active .tab-en { opacity: 0.8; color: var(--color-gold); }
+
+        /* Panel overlay - like science exhibit detail */
+        .tool-detail-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(3, 3, 6, 0.97); backdrop-filter: blur(20px);
+            z-index: 200; overflow-y: auto; padding: 0 1.5rem 1.5rem;
+        }
+        .tool-detail-overlay.open { display: block; animation: panelOverlayIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes panelOverlayIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tool-detail-overlay .sed-back-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.5rem 1.2rem;
+            background: transparent;
+            border: none; border-radius: 8px;
+            color: var(--color-muted); font-size: 0.78rem;
+            cursor: pointer; transition: all 0.3s;
+            position: relative; z-index: 210;
+            letter-spacing: 0.05em;
+        }
+        .tool-detail-overlay .sed-back-btn::before {
+            content: ''; position: absolute; inset: 0;
+            border-radius: 8px;
+            background: rgba(201,168,76,0.06);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .tool-detail-overlay .sed-back-btn:hover {
+            color: var(--color-accent-bright);
+        }
+        .tool-detail-overlay .sed-back-btn:hover::before {
+            opacity: 1;
+        }
+        .tool-detail-overlay .back-arrow {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%;
+            border: 1px solid rgba(201,168,76,0.15);
+            transition: all 0.3s;
+        }
+        .tool-detail-overlay .sed-back-btn:hover .back-arrow {
+            border-color: rgba(201,168,76,0.35);
+            box-shadow: 0 0 12px rgba(201,168,76,0.1);
+        }
+        .tool-detail-content {
+            max-width: 600px; margin: 0 auto;
+            padding-top: 3.5rem;
+            display: flex; flex-direction: column; align-items: flex-end;
+        }
+        .tool-detail-content .sed-back-btn {
+            align-self: flex-end;
+            margin-bottom: 0.5rem;
+        }
+        .tool-panel { display: none; max-width: 600px; margin: 0 auto; padding-top: 0; width: 100%; align-self: center; }
+        .tool-panel.active { display: block; animation: panelSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes panelSlideIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ===== Glass card base ===== */
+        .glass-card {
+            background: rgba(14, 14, 35, 0.5);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(201, 168, 76, 0.08);
+            border-radius: 20px; padding: 1.2rem 1.5rem;
+            box-shadow: 0 8px 48px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255,255,255,0.03),
+                        0 0 0 1px rgba(0,0,0,0.15);
+            position: relative; overflow: hidden;
+        }
+        .glass-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent 5%, rgba(240,208,96,0.3) 30%, rgba(240,208,96,0.5) 50%, rgba(240,208,96,0.3) 70%, transparent 95%);
+        }
+        .glass-card::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 120px;
+            background: linear-gradient(180deg, rgba(201,168,76,0.03), transparent);
+            pointer-events: none;
+        }
+        .glass-card h3 {
+            font-family: var(--font-serif); font-size: 1rem; margin-bottom: 0.1rem;
+            background: linear-gradient(135deg, #f0d060, #c89030);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; position: relative; z-index: 1;
+        }
+        .glass-card .card-en-label {
+            font-family: var(--font-mono); font-size: 0.55rem;
+            letter-spacing: 0.25em; color: var(--color-muted); opacity: 0.6;
+            margin-bottom: 0.5rem; position: relative; z-index: 1;
+        }
+        .glass-card .card-desc {
+            font-size: 0.72rem; color: var(--color-text-secondary);
+            line-height: 1.6; margin-bottom: 0.6rem; position: relative; z-index: 1;
+        }
+
+        /* ===== MEDITATION PANEL ===== */
+        .med-modes {
+            display: flex; justify-content: center; gap: 0.4rem; margin-bottom: 0.6rem;
+            position: relative; z-index: 1;
+        }
+        .med-mode-btn {
+            padding: 6px 16px; border-radius: 24px;
+            border: 1px solid rgba(201,168,76,0.12);
+            background: transparent; color: var(--color-muted);
+            font-family: var(--font-sans); font-size: 0.75rem;
+            cursor: pointer; transition: all 0.3s; letter-spacing: 0.05em;
+        }
+        .med-mode-btn.active {
+            background: rgba(201,168,76,0.1); color: var(--color-accent-bright);
+            border-color: rgba(201,168,76,0.25);
+            box-shadow: 0 0 12px rgba(201,168,76,0.08);
+        }
+        .med-mode-btn:hover:not(.active) { border-color: rgba(201,168,76,0.2); color: var(--color-text); }
+
+        .breath-container {
+            position: relative; width: 120px; height: 120px; margin: 0 auto 0.3rem;
+        }
+        .breath-ring {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            border-radius: 50%;
+        }
+        .breath-ring-outer {
+            width: 110px; height: 110px;
+            border: 1px solid rgba(201,168,76,0.08);
+            animation: breathRing 8s ease-in-out infinite;
+        }
+        .breath-ring-mid {
+            width: 80px; height: 80px;
+            border: 1px solid rgba(201,168,76,0.15);
+            animation: breathRing 8s ease-in-out infinite 0.5s;
+        }
+        .breath-ring-inner {
+            width: 50px; height: 50px;
+            border: 1px solid rgba(201,168,76,0.22);
+            animation: breathRing 8s ease-in-out infinite 1s;
+        }
+        .breath-ring-core {
+            width: 60px; height: 60px;
+            border: 1px solid rgba(201,168,76,0.3);
+            animation: breathRing 8s ease-in-out infinite 1.5s;
+        }
+        .breath-glow {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80px; height: 80px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(240,208,96,0.15), rgba(201,168,76,0.05), transparent);
+            animation: breathGlow 8s ease-in-out infinite;
+        }
+        .breath-text-main {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-family: var(--font-serif); font-size: 1.1rem; color: var(--color-gold-bright);
+            letter-spacing: 0.25em; white-space: nowrap;
+            animation: breathTextFade 8s ease-in-out infinite;
+        }
+        @keyframes breathRing {
+            0%, 100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.2; }
+            25% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.7; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.9; }
+            75% { transform: translate(-50%, -50%) scale(1.0); opacity: 0.5; }
+        }
+        @keyframes breathGlow {
+            0%, 100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.2; }
+            25% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; }
+            50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.8; }
+            75% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.4; }
+        }
+        @keyframes breathTextFade {
+            0%, 45% { opacity: 1; }
+            50%, 95% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        .breath-cycle-label {
+            font-family: var(--font-mono); font-size: 0.65rem;
+            color: var(--color-muted); letter-spacing: 0.2em; margin-bottom: 0.5rem;
+        }
+        .breath-timer {
+            font-family: var(--font-mono); font-size: 2rem; font-weight: 500;
+            background: linear-gradient(135deg, #e0c868, #c8a040);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 12px rgba(201,168,76,0.2));
+        }
+        .med-controls {
+            display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;
+        }
+        .med-ctrl-btn {
+            width: 48px; height: 48px; border-radius: 50%;
+            border: 1px solid rgba(201,168,76,0.2);
+            background: rgba(201,168,76,0.04); color: var(--color-gold);
+            font-size: 0.9rem; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .med-ctrl-btn:hover {
+            background: rgba(201,168,76,0.1);
+            border-color: rgba(201,168,76,0.35);
+            box-shadow: 0 0 16px rgba(201,168,76,0.15);
+            transform: scale(1.08);
+        }
+        .med-ctrl-btn.active-ctrl {
+            background: rgba(201,168,76,0.12);
+            border-color: rgba(201,168,76,0.4);
+        }
+        .meditation-tips {
+            display: flex; justify-content: center; gap: 1rem; margin-top: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .med-tip {
+            display: flex; align-items: center; gap: 0.4rem;
+            font-size: 0.65rem; color: var(--color-muted);
+        }
+        .med-tip i { color: var(--color-gold); font-size: 0.6rem; opacity: 0.7; }
+
+        /* Sound selector */
+        .sound-selector {
+            display: flex; justify-content: center; gap: 0.8rem; margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .sound-btn {
+            padding: 6px 14px; border-radius: 20px;
+            border: 1px solid rgba(201,168,76,0.1);
+            background: transparent; color: var(--color-muted);
+            font-family: var(--font-sans); font-size: 0.7rem;
+            cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .sound-btn.active {
+            background: rgba(201,168,76,0.08); color: var(--color-accent-bright);
+            border-color: rgba(201,168,76,0.2);
+        }
+        .sound-btn:hover:not(.active) { border-color: rgba(201,168,76,0.15); color: var(--color-text); }
+        .sound-btn .sound-wave {
+            display: flex; align-items: center; gap: 1px; height: 12px;
+        }
+        .sound-btn .sound-wave span {
+            width: 2px; background: currentColor; border-radius: 1px;
+            animation: waveBar 0.8s ease-in-out infinite;
+        }
+        .sound-btn .sound-wave span:nth-child(1) { height: 4px; animation-delay: 0s; }
+        .sound-btn .sound-wave span:nth-child(2) { height: 8px; animation-delay: 0.15s; }
+        .sound-btn .sound-wave span:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+        .sound-btn .sound-wave span:nth-child(4) { height: 10px; animation-delay: 0.1s; }
+        @keyframes waveBar { 0%,100%{transform:scaleY(0.5)} 50%{transform:scaleY(1)} }
+
+        /* ===== POMODORO PANEL ===== */
+        .pomodoro-mode-tabs {
+            display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem;
+            position: relative; z-index: 1;
+        }
+        .pom-mode-btn {
+            padding: 8px 20px; border-radius: 24px;
+            border: 1px solid rgba(201,168,76,0.12);
+            background: transparent; color: var(--color-muted);
+            font-family: var(--font-sans); font-size: 0.75rem;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .pom-mode-btn.active {
+            background: rgba(201,168,76,0.1); color: var(--color-accent-bright);
+            border-color: rgba(201,168,76,0.25);
+            box-shadow: 0 0 12px rgba(201,168,76,0.08);
+        }
+        .pom-mode-btn:hover:not(.active) { border-color: rgba(201,168,76,0.2); color: var(--color-text); }
+
+        .pomodoro-ring-container {
+            position: relative; width: 180px; height: 180px; margin: 0 auto 0.8rem;
+        }
+        .pomodoro-ring-svg {
+            width: 100%; height: 100%; transform: rotate(-90deg);
+            filter: drop-shadow(0 0 8px rgba(201,168,76,0.15));
+        }
+        .pomodoro-ring-bg {
+            fill: none; stroke: rgba(201,168,76,0.06); stroke-width: 5;
+        }
+        .pomodoro-ring-track {
+            fill: none; stroke: rgba(201,168,76,0.04); stroke-width: 12;
+        }
+        .pomodoro-ring-fill {
+            fill: none; stroke: url(#pomGoldGrad); stroke-width: 5;
+            stroke-linecap: round; stroke-dasharray: 628; stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .pomodoro-ring-glow {
+            fill: none; stroke: url(#pomGoldGrad); stroke-width: 12;
+            stroke-linecap: round; stroke-dasharray: 628; stroke-dashoffset: 0;
+            opacity: 0.15; filter: blur(4px);
+            transition: stroke-dashoffset 1s linear;
+        }
+        .pomodoro-center {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .pomodoro-time {
+            font-family: var(--font-mono); font-size: 2.8rem; font-weight: 500;
+            background: linear-gradient(135deg, #e0c868, #c8a040);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 16px rgba(201,168,76,0.25));
+            line-height: 1;
+        }
+        .pomodoro-phase {
+            font-size: 0.7rem; color: var(--color-muted); letter-spacing: 0.2em; margin-top: 0.5rem;
+        }
+        .pomodoro-btns {
+            display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;
+        }
+        .pom-btn {
+            padding: 14px 36px; border-radius: 50px; border: 1.5px solid;
+            font-family: var(--font-sans); font-size: 0.85rem; font-weight: 500;
+            cursor: pointer; transition: all 0.4s; letter-spacing: 0.1em;
+            background: transparent; position: relative; overflow: hidden;
+        }
+        .pom-btn-primary {
+            border-color: rgba(201,168,76,0.35); color: var(--color-accent-bright);
+        }
+        .pom-btn-primary::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(201,168,76,0.1), transparent);
+            transition: left 0.6s;
+        }
+        .pom-btn-primary:hover::before { left: 100%; }
+        .pom-btn-primary:hover {
+            background: rgba(201,168,76,0.08);
+            box-shadow: 0 0 28px rgba(201,168,76,0.2);
+            transform: translateY(-2px);
+        }
+        .pom-btn-secondary {
+            border-color: rgba(201,168,76,0.15); color: var(--color-muted);
+        }
+        .pom-btn-secondary:hover {
+            border-color: rgba(201,168,76,0.3); color: var(--color-text);
+        }
+        .pomodoro-sessions {
+            display: flex; justify-content: center; gap: 0.8rem; margin-top: 1.5rem;
+        }
+        .pom-session-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            border: 1.5px solid rgba(201,168,76,0.2);
+            transition: all 0.4s; position: relative;
+        }
+        .pom-session-dot.completed {
+            background: var(--color-gold); border-color: var(--color-gold);
+            box-shadow: 0 0 10px rgba(201,168,76,0.4);
+        }
+        .pom-session-dot.completed::after {
+            content: ''; position: absolute; inset: -3px; border-radius: 50%;
+            border: 1px solid rgba(201,168,76,0.2);
+        }
+        .pomodoro-daily {
+            display: flex; justify-content: center; gap: 1.5rem; margin-top: 1rem;
+            padding-top: 1rem; border-top: 1px solid rgba(201,168,76,0.06);
+        }
+        .pom-daily-stat { text-align: center; }
+        .pom-daily-num {
+            font-family: var(--font-mono); font-size: 1rem;
+            color: var(--color-accent-bright);
+        }
+        .pom-daily-label {
+            font-size: 0.65rem; color: var(--color-muted); letter-spacing: 0.12em; margin-top: 0.2rem;
+        }
+
+        /* ===== GOALS PANEL ===== */
+        .goals-categories {
+            display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+            position: relative; z-index: 1;
+        }
+        .goal-cat-btn {
+            padding: 6px 16px; border-radius: 20px;
+            border: 1px solid rgba(201,168,76,0.1);
+            background: transparent; color: var(--color-muted);
+            font-family: var(--font-sans); font-size: 0.72rem;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .goal-cat-btn.active {
+            background: rgba(201,168,76,0.1); color: var(--color-accent-bright);
+            border-color: rgba(201,168,76,0.25);
+        }
+        .goal-cat-btn:hover:not(.active) { border-color: rgba(201,168,76,0.18); color: var(--color-text); }
+
+        .goals-input-row { display: flex; gap: 0.8rem; position: relative; z-index: 1; }
+        .goals-input {
+            flex: 1; padding: 14px 18px; border-radius: 16px;
+            border: 1.5px solid rgba(201,168,76,0.1);
+            background: rgba(10,10,25,0.5); color: var(--color-text);
+            font-family: var(--font-sans); font-size: 0.9rem;
+            transition: all 0.3s; outline: none;
+        }
+        .goals-input::placeholder { color: rgba(200,196,184,0.3); }
+        .goals-input:focus {
+            border-color: rgba(201,168,76,0.3);
+            box-shadow: 0 0 20px rgba(201,168,76,0.1), inset 0 0 20px rgba(201,168,76,0.02);
+        }
+        .goals-add-btn {
+            padding: 14px 24px; border-radius: 16px; border: none;
+            background: linear-gradient(135deg, #e0c868, #c89030);
+            color: #08080c; font-family: var(--font-sans); font-size: 0.9rem;
+            font-weight: 600; cursor: pointer; transition: all 0.4s;
+            box-shadow: 0 4px 20px rgba(201,168,76,0.2);
+            position: relative; overflow: hidden;
+        }
+        .goals-add-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+        .goals-add-btn:hover::before { left: 100%; }
+        .goals-add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(201,168,76,0.3);
+        }
+
+        .goals-progress {
+            display: flex; align-items: center; gap: 1rem; margin: 1.8rem 0;
+            padding: 1.2rem 1.5rem; border-radius: 16px;
+            background: rgba(201,168,76,0.03); border: 1px solid rgba(201,168,76,0.05);
+            position: relative; z-index: 1;
+        }
+        .goals-progress-label { font-size: 0.72rem; color: var(--color-muted); white-space: nowrap; letter-spacing: 0.1em; }
+        .goals-progress-bar {
+            flex: 1; height: 4px; border-radius: 2px;
+            background: rgba(201,168,76,0.06); overflow: hidden;
+        }
+        .goals-progress-fill {
+            height: 100%; border-radius: 2px; width: 0%;
+            background: linear-gradient(90deg, #c89030, #e0c868, #f0d060);
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .goals-progress-fill::after {
+            content: ''; position: absolute; right: 0; top: -2px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #f0d060;
+            box-shadow: 0 0 8px rgba(240,208,96,0.5);
+        }
+        .goals-progress-num {
+            font-family: var(--font-mono); font-size: 0.8rem;
+            color: var(--color-accent-bright); white-space: nowrap;
+        }
+
+        .goal-item {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 1.1rem 1.4rem; border-radius: 16px;
+            background: rgba(201,168,76,0.02); border: 1px solid rgba(201,168,76,0.05);
+            margin-bottom: 0.6rem; transition: all 0.3s;
+            position: relative; z-index: 1;
+        }
+        .goal-item:hover {
+            border-color: rgba(201,168,76,0.12);
+            background: rgba(201,168,76,0.04);
+            transform: translateX(4px);
+        }
+        .goal-item-priority {
+            width: 3px; height: 24px; border-radius: 2px; flex-shrink: 0;
+        }
+        .goal-item-priority.high { background: linear-gradient(180deg, #e0c868, #c89030); }
+        .goal-item-priority.medium { background: linear-gradient(180deg, #b08850, #8a6830); }
+        .goal-item-priority.low { background: linear-gradient(180deg, #8a8680, #605c58); }
+        .goal-check {
+            width: 24px; height: 24px; border-radius: 50%;
+            border: 1.5px solid rgba(201,168,76,0.25);
+            cursor: pointer; transition: all 0.3s; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent; color: transparent; font-size: 0.7rem;
+        }
+        .goal-check:hover { border-color: rgba(201,168,76,0.4); }
+        .goal-check.checked {
+            background: linear-gradient(135deg, #e0c868, #c89030);
+            border-color: transparent; color: #08080c;
+            box-shadow: 0 0 12px rgba(201,168,76,0.3);
+        }
+        .goal-text { flex: 1; font-size: 0.88rem; color: var(--color-text); }
+        .goal-text.done { text-decoration: line-through; color: var(--color-muted); opacity: 0.6; }
+        .goal-tag {
+            font-size: 0.6rem; padding: 2px 8px; border-radius: 10px;
+            background: rgba(201,168,76,0.06); color: var(--color-muted);
+            border: 1px solid rgba(201,168,76,0.06);
+        }
+        .goal-delete {
+            font-size: 0.7rem; color: var(--color-muted); cursor: pointer;
+            transition: all 0.3s; padding: 6px; border-radius: 8px; opacity: 0;
+        }
+        .goal-item:hover .goal-delete { opacity: 1; }
+        .goal-delete:hover { color: #e06050; background: rgba(224,96,80,0.08); }
+        .goals-empty {
+            text-align: center; padding: 3rem 2rem; color: var(--color-muted);
+            font-size: 0.85rem; position: relative; z-index: 1;
+        }
+        .goals-empty .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.3; }
+
+        /* ===== VALUES PANEL ===== */
+        .values-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+            position: relative; z-index: 1;
+        }
+        .value-card {
+            padding: 1.8rem 1rem; border-radius: 20px; text-align: center;
+            border: 1px solid rgba(201,168,76,0.06);
+            background: rgba(201,168,76,0.01);
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+        }
+        .value-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(240,208,96,0.4), transparent);
+            opacity: 0; transition: opacity 0.4s;
+        }
+        .value-card::after {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(201,168,76,0.06), transparent 60%);
+            opacity: 0; transition: opacity 0.4s;
+        }
+        .value-card:hover::before { opacity: 1; }
+        .value-card:hover::after { opacity: 1; }
+        .value-card:hover {
+            border-color: rgba(201,168,76,0.2);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.3), 0 0 16px rgba(201,168,76,0.08);
+        }
+        .value-card.selected {
+            border-color: rgba(201,168,76,0.35);
+            background: rgba(201,168,76,0.06);
+            box-shadow: 0 0 24px rgba(201,168,76,0.12), inset 0 0 20px rgba(201,168,76,0.03);
+        }
+        .value-card.selected::before { opacity: 1; }
+        .value-card.selected::after { opacity: 1; }
+        .value-card .value-icon {
+            font-size: 2rem; margin-bottom: 0.8rem;
+            transition: transform 0.4s;
+        }
+        .value-card:hover .value-icon { transform: scale(1.15); }
+        .value-card.selected .value-icon { transform: scale(1.2); }
+        .value-card .value-name {
+            font-family: var(--font-serif); font-size: 0.95rem;
+            color: var(--color-text); margin-bottom: 0.3rem;
+            position: relative; z-index: 1;
+        }
+        .value-card .value-sub {
+            font-family: var(--font-mono); font-size: 0.58rem;
+            color: var(--color-muted); letter-spacing: 0.15em; opacity: 0.6;
+            position: relative; z-index: 1;
+        }
+        .value-card .value-check-mark {
+            position: absolute; top: 8px; right: 8px;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: linear-gradient(135deg, #e0c868, #c89030);
+            color: #08080c; font-size: 0.55rem;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transform: scale(0.5);
+            transition: all 0.3s;
+        }
+        .value-card.selected .value-check-mark { opacity: 1; transform: scale(1); }
+
+        /* Value result */
+        .value-result-box {
+            margin-top: 2rem; padding: 2rem; border-radius: 20px;
+            background: rgba(201,168,76,0.03); border: 1px solid rgba(201,168,76,0.06);
+            text-align: center; position: relative; z-index: 1;
+        }
+        .value-result-box::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(240,208,96,0.3), transparent);
+        }
+        .value-result-header {
+            font-family: var(--font-mono); font-size: 0.6rem;
+            letter-spacing: 0.25em; color: var(--color-muted); margin-bottom: 1rem;
+        }
+        .value-result-text {
+            font-size: 0.9rem; color: var(--color-gold-bright); line-height: 1.8;
+        }
+        .value-result-quote {
+            font-family: var(--font-serif); font-size: 1rem;
+            color: var(--color-text); margin-top: 1rem; line-height: 2;
+            font-style: italic;
+            padding: 1rem; border-left: 2px solid rgba(201,168,76,0.2);
+            text-align: left;
+        }
+        .value-result-tags {
+            display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;
+        }
+        .value-result-tag {
+            font-size: 0.65rem; padding: 4px 12px; border-radius: 12px;
+            background: rgba(201,168,76,0.06); color: var(--color-muted);
+            border: 1px solid rgba(201,168,76,0.06);
+        }
+
+        /* Radar chart canvas */
+        .values-radar-container {
+            margin-top: 2rem; text-align: center;
+            position: relative; z-index: 1;
+        }
+        .values-radar-container canvas {
+            max-width: 280px; margin: 0 auto;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .values-grid { grid-template-columns: repeat(2, 1fr); }
+            .tools-stats { gap: 1.5rem; }
+            .glass-card { padding: 2rem 1.5rem; border-radius: 20px; }
+            .breath-container { width: 220px; height: 220px; }
+            .breath-ring-outer { width: 200px; height: 200px; }
+            .breath-ring-mid { width: 150px; height: 150px; }
+            .breath-ring-inner { width: 100px; height: 100px; }
+            .breath-ring-core { width: 50px; height: 50px; }
+            .pomodoro-ring-container { width: 200px; height: 200px; }
+            .pomodoro-time { font-size: 2.2rem; }
+            .tab-nav-upgrade { width: calc(100% - 2rem); }
+            .tab-btn-upgrade { padding: 12px 6px; }
+            .tab-btn-upgrade .tab-icon { font-size: 1.2rem; }
+        }
+        @media (max-width: 480px) {
+            .tools-stats { gap: 1rem; }
+            .tools-stat-num { font-size: 1.3rem; }
+            .meditation-tips { gap: 1rem; }
+            .pomodoro-daily { gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Ambient orbs -->
+    <div class="ambient-orb ambient-orb-1"></div>
+    <div class="ambient-orb ambient-orb-2"></div>
+    <div class="ambient-orb ambient-orb-3"></div>
+
+    <nav id="global-nav">
+        <div class="nav-inner">
+            <a class="nav-logo" href="index.html" style="text-decoration:none;">☯ 心光宇宙</a>
+            <a class="nav-link" href="index.html">首页</a>
+            <a class="nav-link" href="index.html">心学</a>
+            <a class="nav-link" href="index.html">科学</a>
+            <a class="nav-link" href="index.html">分享</a>
+            <div class="nav-divider"></div>
+            <a class="nav-link active" href="tools.html">工具</a>
+            <a class="nav-link" href="seminar.html">研讨</a>
+            <a class="nav-link" href="message.html">留言</a>
+        </div>
+    </nav>
+
+    <div class="tool-page-body">
+        <div class="tool-page">
+            <!-- Hero -->
+            <div class="tools-hero">
+                <span class="phase-label">INTERACTIVE TOOLS</span>
+                <h1>互动工具</h1>
+                <div class="tools-divider"></div>
+            </div>
+
+            <!-- Tab Nav -->
+            <div class="tab-nav-upgrade">
+                <button class="tab-btn-upgrade" data-tab="panel-meditation">
+                    <span class="tab-icon"><svg viewBox="0 0 32 32" fill="none" width="24" height="24"><circle cx="16" cy="12" r="6" stroke="#c9a84c" stroke-width="1.2"/><path d="M10 22c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#c9a84c" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M16 6v-2M12 7.5l-1-1.7M20 7.5l1-1.7" stroke="#c9a84c" stroke-width="1" stroke-linecap="round" opacity="0.5"/></svg></span>
+                    <span class="tab-label">冥想引导</span>
+                    <span class="tab-en">MEDITATION</span>
+                </button>
+                <button class="tab-btn-upgrade" data-tab="panel-pomodoro">
+                    <span class="tab-icon"><svg viewBox="0 0 32 32" fill="none" width="24" height="24"><circle cx="16" cy="17" r="10" stroke="#c9a84c" stroke-width="1.2"/><line x1="16" y1="17" x2="16" y2="10" stroke="#c9a84c" stroke-width="1.2" stroke-linecap="round"/><line x1="16" y1="17" x2="21" y2="17" stroke="#c9a84c" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/><line x1="16" y1="5" x2="16" y2="7" stroke="#c9a84c" stroke-width="1.2" stroke-linecap="round"/><line x1="10" y1="7" x2="11.5" y2="8.5" stroke="#c9a84c" stroke-width="1" stroke-linecap="round" opacity="0.5"/><line x1="22" y1="7" x2="20.5" y2="8.5" stroke="#c9a84c" stroke-width="1" stroke-linecap="round" opacity="0.5"/></svg></span>
+                    <span class="tab-label">番茄钟</span>
+                    <span class="tab-en">POMODORO</span>
+                </button>
+                <button class="tab-btn-upgrade" data-tab="panel-goals">
+                    <span class="tab-icon"><svg viewBox="0 0 32 32" fill="none" width="24" height="24"><circle cx="16" cy="16" r="8" stroke="#c9a84c" stroke-width="1.2"/><circle cx="16" cy="16" r="3" fill="#c9a84c" opacity="0.3"/><line x1="16" y1="8" x2="16" y2="5" stroke="#c9a84c" stroke-width="1" stroke-linecap="round" opacity="0.5"/><line x1="22.5" y1="9.5" x2="24.5" y2="7.5" stroke="#c9a84c" stroke-width="1" stroke-linecap="round" opacity="0.5"/><line x1="24" y1="16" x2="27" y2="16" stroke="#c9a84c" stroke-width="1" stroke-linecap="round" opacity="0.5"/></svg></span>
+                    <span class="tab-label">目标规划</span>
+                    <span class="tab-en">GOALS</span>
+                </button>
+                <button class="tab-btn-upgrade" data-tab="panel-values">
+                    <span class="tab-icon"><svg viewBox="0 0 32 32" fill="none" width="24" height="24"><path d="M16 4L18 10h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z" stroke="#c9a84c" stroke-width="1.2" fill="#c9a84c" fill-opacity="0.15" stroke-linejoin="round"/><circle cx="16" cy="24" r="3" stroke="#c9a84c" stroke-width="1" opacity="0.4"/></svg></span>
+                    <span class="tab-label">价值观</span>
+                    <span class="tab-en">VALUES</span>
+                </button>
+            </div>
+
+            <!-- Tool panels (hidden, shown in overlay) -->
+            <div id="panel-source" style="display:none;">
+                <!-- ===== MEDITATION PANEL ===== -->
+                <div class="tool-panel" id="panel-meditation">
+                    <div class="glass-card">
+                        <h3>正念冥想引导</h3>
+                        <div class="card-en-label">MINDFULNESS MEDITATION</div>
+                        <p class="card-desc">闭上眼睛，跟随呼吸的节奏，让心灵回归宁静。<br>王阳明说「静处体悟」——在安静中，你会听到内心最真实的声音。</p>
+
+                        <div class="med-modes">
+                            <button class="med-mode-btn active" data-cycle="8">放松呼吸 8s</button>
+                            <button class="med-mode-btn" data-cycle="4">快速平静 4s</button>
+                            <button class="med-mode-btn" data-cycle="12">深度冥想 12s</button>
+                        </div>
+
+                        <div class="breath-container">
+                            <div class="breath-ring breath-ring-outer"></div>
+                            <div class="breath-ring breath-ring-mid"></div>
+                            <div class="breath-ring breath-ring-inner"></div>
+                            <div class="breath-ring breath-ring-core"></div>
+                            <div class="breath-glow"></div>
+                            <div class="breath-text-main" id="breath-text">吸气...</div>
+                        </div>
+
+                        <div class="breath-cycle-label" id="breath-cycle-label">呼吸周期 8 秒</div>
+                        <div class="breath-timer" id="med-timer">00:00</div>
+
+                        <div class="med-controls">
+                            <button class="med-ctrl-btn" id="med-play" title="开始/暂停"><i class="fas fa-play"></i></button>
+                            <button class="med-ctrl-btn" id="med-reset" title="重置"><i class="fas fa-redo"></i></button>
+                        </div>
+
+                        <div class="sound-selector">
+                            <button class="sound-btn" data-sound="rain"><i class="fas fa-cloud-rain"></i> 雨声</button>
+                            <button class="sound-btn" data-sound="ocean"><i class="fas fa-water"></i> 海浪</button>
+                            <button class="sound-btn" data-sound="wind"><i class="fas fa-wind"></i> 微风</button>
+                            <button class="sound-btn" data-sound="silence"><i class="fas fa-moon"></i> 静默</button>
+                        </div>
+
+                        <div class="meditation-tips">
+                            <div class="med-tip"><i class="fas fa-clock"></i> 建议 5-10 分钟</div>
+                            <div class="med-tip"><i class="fas fa-moon"></i> 安静的环境</div>
+                            <div class="med-tip"><i class="fas fa-couch"></i> 舒服的坐姿</div>
+                            <div class="med-tip"><i class="fas fa-wind"></i> 放松身体</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== POMODORO PANEL ===== -->
+                <div class="tool-panel" id="panel-pomodoro">
+                    <div class="glass-card">
+                        <h3>番茄钟 · 专注计时器</h3>
+                        <div class="card-en-label">POMODORO FOCUS TIMER</div>
+                        <p class="card-desc">用科学的方法管理注意力。<br>25分钟深度专注 + 5分钟休息，这是经过验证的最高效学习节奏。</p>
+
+                        <div class="pomodoro-mode-tabs">
+                            <button class="pom-mode-btn active" data-minutes="25">专注 25min</button>
+                            <button class="pom-mode-btn" data-minutes="15">短时 15min</button>
+                            <button class="pom-mode-btn" data-minutes="5">休息 5min</button>
+                        </div>
+
+                        <div class="pomodoro-ring-container">
+                            <svg class="pomodoro-ring-svg" viewBox="0 0 180 180">
+                                <defs>
+                                    <linearGradient id="pomGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#f0d060"/>
+                                        <stop offset="50%" style="stop-color:#e0c868"/>
+                                        <stop offset="100%" style="stop-color:#a87828"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle class="pomodoro-ring-track" cx="90" cy="90" r="80"/>
+                                <circle class="pomodoro-ring-bg" cx="90" cy="90" r="80"/>
+                                <circle class="pomodoro-ring-glow" id="pom-ring-glow" cx="90" cy="90" r="80"/>
+                                <circle class="pomodoro-ring-fill" id="pom-ring" cx="90" cy="90" r="80"/>
+                            </svg>
+                            <div class="pomodoro-center">
+                                <div class="pomodoro-time" id="pomodoro-display">25:00</div>
+                                <div class="pomodoro-phase" id="pom-phase">准备开始</div>
+                            </div>
+                        </div>
+
+                        <div class="pomodoro-btns">
+                            <button class="pom-btn pom-btn-primary" id="pomodoro-start">
+                                <i class="fas fa-play"></i>&nbsp; 开始专注
+                            </button>
+                            <button class="pom-btn pom-btn-secondary" id="pomodoro-reset">
+                                <i class="fas fa-redo"></i>&nbsp; 重置
+                            </button>
+                        </div>
+
+                        <div class="pomodoro-sessions" id="pom-sessions">
+                            <div class="pom-session-dot"></div>
+                            <div class="pom-session-dot"></div>
+                            <div class="pom-session-dot"></div>
+                            <div class="pom-session-dot"></div>
+                        </div>
+
+                        <div class="pomodoro-daily">
+                            <div class="pom-daily-stat">
+                                <div class="pom-daily-num" id="pom-today-count">0</div>
+                                <div class="pom-daily-label">今日完成</div>
+                            </div>
+                            <div class="pom-daily-stat">
+                                <div class="pom-daily-num" id="pom-today-minutes">0</div>
+                                <div class="pom-daily-label">专注分钟</div>
+                            </div>
+                            <div class="pom-daily-stat">
+                                <div class="pom-daily-num" id="pom-streak">0</div>
+                                <div class="pom-daily-label">连续天数</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== GOALS PANEL ===== -->
+                <div class="tool-panel" id="panel-goals">
+                    <div class="glass-card">
+                        <h3>知行合一 · 目标规划器</h3>
+                        <div class="card-en-label">UNITY OF KNOWLEDGE AND ACTION</div>
+                        <p class="card-desc">将宏大的目标拆解为可执行的小步骤。正如王阳明所说——<br>「知是行之始，行是知之成」，每完成一个小目标，就是一次「知行合一」的实践。</p>
+
+                        <div class="goals-categories">
+                            <button class="goal-cat-btn active" data-cat="all">全部</button>
+                            <button class="goal-cat-btn" data-cat="study">📚 学习</button>
+                            <button class="goal-cat-btn" data-cat="life">🌿 生活</button>
+                            <button class="goal-cat-btn" data-cat="growth">🌱 成长</button>
+                            <button class="goal-cat-btn" data-cat="social">🤝 社交</button>
+                        </div>
+
+                        <div class="goals-input-row">
+                            <input type="text" class="goals-input" id="goal-input" placeholder="写下你的目标...">
+                            <button class="goals-add-btn" id="goal-add">+</button>
+                        </div>
+
+                        <div class="goals-progress">
+                            <span class="goals-progress-label">完成进度</span>
+                            <div class="goals-progress-bar"><div class="goals-progress-fill" id="goals-fill"></div></div>
+                            <span class="goals-progress-num" id="goals-num">0/0</span>
+                        </div>
+
+                        <div id="goal-list">
+                            <div class="goals-empty">
+                                <div class="empty-icon"><svg viewBox="0 0 32 32" fill="none" width="32" height="32"><circle cx="16" cy="16" r="8" stroke="#c9a84c" stroke-width="1" opacity="0.3"/><circle cx="16" cy="16" r="3" fill="#c9a84c" opacity="0.15"/></svg></div>
+                                还没有目标，开始添加吧
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== VALUES PANEL ===== -->
+                <div class="tool-panel" id="panel-values">
+                    <div class="glass-card">
+                        <h3>价值观探索</h3>
+                        <div class="card-en-label">VALUES EXPLORATION</div>
+                        <p class="card-desc">《思辨与立场》提醒我们，清晰的价值观是批判性思维的基础。<br>选择最能触动你的核心价值观（可多选），让它成为你决策的指南针。</p>
+
+                        <div class="values-grid">
+                            <div class="value-card" data-value="求知">
+                                <div class="value-check-mark">✓</div>
+                                <div class="value-icon">📚</div>
+                                <div class="value-name">求知</div>
+                                <div class="value-sub">KNOWLEDGE</div>
+                            </div>
+                            <div class="value-card" data-value="真诚">
+                                <div class="value-check-mark">✓</div>
+                                <div class="value-icon">💎</div>
+                                <div class="value-name">真诚</div>
+                                <div class="value-sub">SINCERITY</div>
+                            </div>
+                            <div class="value-card" data-value="自由">
+                                <div class="value-check-mark">✓</div>
+                                <div class="value-icon">🕊️</div>
+                                <div class="value-name">自由</div>
+                                <div class="value-sub">FREEDOM</div>
+                            </div>
+                            <div class="value-card" data-value="公正">
+                                <div class="value-check-mark">✓</div>
+                                <div class="value-icon">⚖️</div>
+                                <div class="value-name">公正</div>
+                                <div class="value-sub">JUSTICE</div>
+                            </div>
+                            <div class="value-card" data-value="创造">
+                                <div class="value-check-mark">✓</div>
+                                <div class="value-icon">🎨</div>
+                                <div class="value-name">创造</div>
+                                <div class="value-sub">CREATIVITY</div>
+                            </div>
+                            <div class="value-card" data-value="责任">
+                                <div class="value-check-mark">✓</div>
+                                <div class="value-icon">🛡️</div>
+                                <div class="value-name">责任</div>
+                                <div class="value-sub">RESPONSIBILITY</div>
+                            </div>
+                            <div class="value-card" data-value="勇气">
+                                <div class="value-check-mark">✓</div>
+                                <div class="value-icon">🔥</div>
+                                <div class="value-name">勇气</div>
+                                <div class="value-sub">COURAGE</div>
+                            </div>
+                            <div class="value-card" data-value="智慧">
+                                <div class="value-check-mark">✓</div>
+                                <div class="value-icon">🌟</div>
+                                <div class="value-name">智慧</div>
+                                <div class="value-sub">WISDOM</div>
+                            </div>
+                        </div>
+
+                        <!-- Radar chart -->
+                        <div class="values-radar-container" id="radar-container" style="display:none;">
+                            <canvas id="values-radar" width="280" height="280"></canvas>
+                        </div>
+
+                        <div class="value-result-box" id="value-result-box" style="display:none;">
+                            <div class="value-result-header">YOUR VALUE PROFILE</div>
+                            <div class="value-result-text" id="value-result-text"></div>
+                            <div class="value-result-quote" id="value-result-quote"></div>
+                            <div class="value-result-tags" id="value-result-tags"></div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end panel-source -->
+        </div>
+    </div>
+
+    <!-- Tool Detail Overlay -->
+    <div class="tool-detail-overlay" id="tool-detail-overlay">
+        <div class="tool-detail-content" id="tool-detail-content">
+            <button class="sed-back-btn" onclick="closeToolPanel()"><span class="back-arrow">←</span> 返回</button>
+        </div>
+    </div>
+
+    <script src="js/particles.js"></script>
+    <script>
+    // ===== Tab switching - open overlay (like science exhibit) =====
+    const toolOverlay = document.getElementById('tool-detail-overlay');
+    const toolDetailContent = document.getElementById('tool-detail-content');
+
+    function openToolPanel(tabId) {
+        // Highlight selected card
+        document.querySelectorAll('.tab-btn-upgrade').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+        // Move panel into overlay (after back button)
+        const panel = document.getElementById(tabId);
+        if (panel && toolDetailContent) {
+            // Keep the back button, remove old panel
+            const backBtn = toolDetailContent.querySelector('.sed-back-btn');
+            toolDetailContent.innerHTML = '';
+            if (backBtn) toolDetailContent.appendChild(backBtn);
+            panel.style.display = 'block';
+            toolDetailContent.appendChild(panel);
+        }
+        toolOverlay.classList.add('open');
+        // Re-init refs
+        initMedRefs();
+        initPomRefs();
+    }
+
+    function closeToolPanel() {
+        toolOverlay.classList.remove('open');
+        document.querySelectorAll('.tab-btn-upgrade').forEach(b => b.classList.remove('active'));
+        // Move panel back to source
+        const activePanel = toolDetailContent.querySelector('.tool-panel');
+        if (activePanel) {
+            document.getElementById('panel-source').appendChild(activePanel);
+        }
+    }
+
+    document.querySelectorAll('.tab-btn-upgrade').forEach(btn => {
+        btn.addEventListener('click', () => openToolPanel(btn.dataset.tab));
+    });
+
+    // ===== MEDITATION =====
+    let medSeconds = 0, medRunning = false, medInterval = null, breathCycle = 8;
+    let medTimerEl, breathTextEl, breathCycleLabel, medPlayBtn, medResetBtn;
+
+    function initMedRefs() {
+        medTimerEl = document.getElementById('med-timer');
+        breathTextEl = document.getElementById('breath-text');
+        breathCycleLabel = document.getElementById('breath-cycle-label');
+        medPlayBtn = document.getElementById('med-play');
+        medResetBtn = document.getElementById('med-reset');
+    }
+    initMedRefs();
+
+    function updateMedTimer() {
+        const m = Math.floor(medSeconds / 60).toString().padStart(2, '0');
+        const s = (medSeconds % 60).toString().padStart(2, '0');
+        medTimerEl.textContent = `${m}:${s}`;
+    }
+
+    // Breath text animation
+    let breathPhase = 0;
+    function updateBreathText() {
+        const half = breathCycle / 2;
+        const phase = (Date.now() / 1000) % breathCycle;
+        if (phase < half) {
+            breathTextEl.textContent = '吸气...';
+            breathTextEl.style.opacity = 0.6 + (phase / half) * 0.4;
+        } else {
+            breathTextEl.textContent = '呼气...';
+            breathTextEl.style.opacity = 1 - ((phase - half) / half) * 0.4;
+        }
+        if (medRunning) requestAnimationFrame(updateBreathText);
+    }
+
+    // Update ring animations
+    function updateBreathAnimations(cycle) {
+        document.querySelectorAll('.breath-ring, .breath-glow').forEach(el => {
+            el.style.animationDuration = cycle + 's';
+        });
+        breathCycleLabel.textContent = `呼吸周期 ${cycle} 秒`;
+    }
+
+    // Mode buttons - event delegation
+    document.addEventListener('click', (e) => {
+        const medModeBtn = e.target.closest('.med-mode-btn');
+        if (medModeBtn) {
+            document.querySelectorAll('.med-mode-btn').forEach(b => b.classList.remove('active'));
+            medModeBtn.classList.add('active');
+            breathCycle = parseInt(medModeBtn.dataset.cycle);
+            updateBreathAnimations(breathCycle);
+            return;
+        }
+
+        // Play/Pause
+        if (e.target.closest('#med-play')) {
+            initMedRefs();
+            if (medRunning) {
+                clearInterval(medInterval); medRunning = false;
+                medPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
+                medPlayBtn.classList.remove('active-ctrl');
+            } else {
+                medRunning = true;
+                medPlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                medPlayBtn.classList.add('active-ctrl');
+                medInterval = setInterval(() => { medSeconds++; updateMedTimer(); }, 1000);
+                updateBreathText();
+            }
+            return;
+        }
+
+        // Reset
+        if (e.target.closest('#med-reset')) {
+            clearInterval(medInterval); medRunning = false; medSeconds = 0;
+            updateMedTimer();
+            if (medPlayBtn) { medPlayBtn.innerHTML = '<i class="fas fa-play"></i>'; medPlayBtn.classList.remove('active-ctrl'); }
+            return;
+        }
+
+        // Sound buttons
+        const soundBtn = e.target.closest('.sound-btn');
+        if (soundBtn) {
+            document.querySelectorAll('.sound-btn').forEach(b => b.classList.remove('active'));
+            soundBtn.classList.add('active');
+            return;
+        }
+
+        // Pomodoro start
+        if (e.target.closest('#pomodoro-start')) {
+            initPomRefs();
+            if (pomRunning) {
+                clearInterval(pomInterval); pomRunning = false;
+                pomStart.innerHTML = '<i class="fas fa-play"></i>&nbsp; 继续';
+                pomPhase.textContent = '已暂停';
+            } else {
+                pomRunning = true;
+                pomStart.innerHTML = '<i class="fas fa-pause"></i>&nbsp; 暂停';
+                pomPhase.textContent = '专注中...';
+                pomInterval = setInterval(() => {
+                    pomTime--;
+                    updatePomDisplay();
+                    if (pomTime <= 0) {
+                        clearInterval(pomInterval); pomRunning = false;
+                        pomSessions++; pomTodayCount++;
+                        pomTodayMinutes += Math.round(pomTotal / 60);
+                        updatePomSessions();
+                        updatePomDaily();
+                        pomPhase.textContent = '🎉 完成！休息一下';
+                        pomStart.innerHTML = '<i class="fas fa-play"></i>&nbsp; 开始专注';
+                    }
+                }, 1000);
+            }
+            return;
+        }
+
+        // Pomodoro reset
+        if (e.target.closest('#pomodoro-reset')) {
+            initPomRefs();
+            clearInterval(pomInterval); pomRunning = false;
+            pomTime = pomTotal; updatePomDisplay();
+            pomStart.innerHTML = '<i class="fas fa-play"></i>&nbsp; 开始专注';
+            pomPhase.textContent = '准备开始';
+            return;
+        }
+
+        // Pomodoro mode buttons
+        const pomModeBtn = e.target.closest('.pom-mode-btn');
+        if (pomModeBtn) {
+            document.querySelectorAll('.pom-mode-btn').forEach(b => b.classList.remove('active'));
+            pomModeBtn.classList.add('active');
+            clearInterval(pomInterval); pomRunning = false;
+            pomTime = parseInt(pomModeBtn.dataset.minutes) * 60;
+            pomTotal = pomTime; updatePomDisplay();
+            if (pomStart) { pomStart.innerHTML = '<i class="fas fa-play"></i>&nbsp; 开始专注'; }
+            if (pomPhase) { pomPhase.textContent = '准备开始'; }
+            return;
+        }
+
+        // Goal add
+        if (e.target.closest('#goal-add')) {
+            const goalInput = document.getElementById('goal-input');
+            if (goalInput) {
+                const text = goalInput.value.trim();
+                if (!text) return;
+                const cat = currentCat === 'all' ? 'study' : currentCat;
+                goals.push({ text, done: false, cat, priority: priorities[Math.floor(Math.random() * 3)] });
+                goalInput.value = '';
+                renderGoals();
+            }
+            return;
+        }
+
+        // Goal category filter
+        const goalCatBtn = e.target.closest('.goal-cat-btn');
+        if (goalCatBtn) {
+            document.querySelectorAll('.goal-cat-btn').forEach(b => b.classList.remove('active'));
+            goalCatBtn.classList.add('active');
+            currentCat = goalCatBtn.dataset.cat;
+            renderGoals();
+            return;
+        }
+
+        // Value card toggle
+        const valueCard = e.target.closest('.value-card');
+        if (valueCard) {
+            const value = valueCard.dataset.value;
+            if (selectedValues.has(value)) {
+                selectedValues.delete(value);
+                valueCard.classList.remove('selected');
+            } else {
+                selectedValues.add(value);
+                valueCard.classList.add('selected');
+            }
+            updateValueResult();
+            return;
+        }
+    });
+
+    // Goal input enter key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.id === 'goal-input') {
+            const text = e.target.value.trim();
+            if (!text) return;
+            const cat = currentCat === 'all' ? 'study' : currentCat;
+            goals.push({ text, done: false, cat, priority: priorities[Math.floor(Math.random() * 3)] });
+            e.target.value = '';
+            renderGoals();
+        }
+    });
+
+    // ===== POMODORO =====
+    let pomTime = 25 * 60, pomTotal = 25 * 60, pomRunning = false, pomInterval = null, pomSessions = 0;
+    let pomTodayCount = 0, pomTodayMinutes = 0;
+    let pomDisplay, pomRing, pomRingGlow, pomPhase, pomStart, pomReset;
+    const circumference = 2 * Math.PI * 100;
+
+    function initPomRefs() {
+        pomDisplay = document.getElementById('pomodoro-display');
+        pomRing = document.getElementById('pom-ring');
+        pomRingGlow = document.getElementById('pom-ring-glow');
+        pomPhase = document.getElementById('pom-phase');
+        pomStart = document.getElementById('pomodoro-start');
+        pomReset = document.getElementById('pomodoro-reset');
+    }
+    initPomRefs();
+
+    function updatePomDisplay() {
+        const m = Math.floor(pomTime / 60).toString().padStart(2, '0');
+        const s = (pomTime % 60).toString().padStart(2, '0');
+        pomDisplay.textContent = `${m}:${s}`;
+        const progress = 1 - (pomTime / pomTotal);
+        pomRing.style.strokeDashoffset = circumference * (1 - progress);
+        pomRingGlow.style.strokeDashoffset = circumference * (1 - progress);
+    }
+
+
+    function updatePomSessions() {
+        document.querySelectorAll('.pom-session-dot').forEach((dot, i) => {
+            if (i < pomSessions) {
+                dot.classList.add('completed');
+                gsap.fromTo(dot, { scale: 0 }, { scale: 1, duration: 0.4, ease: 'back.out(2)', delay: i * 0.1 });
+            } else {
+                dot.classList.remove('completed');
+            }
+        });
+    }
+
+    function updatePomDaily() {
+        document.getElementById('pom-today-count').textContent = pomTodayCount;
+        document.getElementById('pom-today-minutes').textContent = pomTodayMinutes;
+    }
+
+    // Pomodoro/goals/values - all handled by event delegation above
+
+    updatePomDisplay();
+
+    // ===== GOALS =====
+    let goals = [];
+    let currentCat = 'all';
+
+    const catMap = { 'study': '📚 学习', 'life': '🌿 生活', 'growth': '🌱 成长', 'social': '🤝 社交' };
+    const priorities = ['high', 'medium', 'low'];
+
+    function getFilteredGoals() {
+        if (currentCat === 'all') return goals;
+        return goals.filter(g => g.cat === currentCat);
+    }
+
+    function renderGoals() {
+        const goalList = document.getElementById('goal-list');
+        const goalsFill = document.getElementById('goals-fill');
+        const goalsNum = document.getElementById('goals-num');
+        if (!goalList || !goalsFill || !goalsNum) return;
+        const filtered = getFilteredGoals();
+        const done = filtered.filter(g => g.done).length;
+        const total = filtered.length;
+        goalsNum.textContent = `${done}/${total}`;
+        goalsFill.style.width = total > 0 ? (done / total * 100) + '%' : '0%';
+        if (total === 0) {
+            goalList.innerHTML = `<div class="goals-empty"><div class="empty-icon">🎯</div>${currentCat === 'all' ? '还没有目标，开始添加吧' : '该分类下还没有目标'}</div>`;
+            return;
+        }
+        goalList.innerHTML = filtered.map((g, i) => `
+            <div class="goal-item" style="animation: panelSlideIn 0.3s ease ${i * 0.04}s both;">
+                <div class="goal-item-priority ${g.priority}"></div>
+                <div class="goal-check ${g.done ? 'checked' : ''}" onclick="toggleGoal(${goals.indexOf(g)})">${g.done ? '✓' : ''}</div>
+                <span class="goal-text ${g.done ? 'done' : ''}">${g.text}</span>
+                <span class="goal-tag">${catMap[g.cat] || g.cat}</span>
+                <span class="goal-delete" onclick="deleteGoal(${goals.indexOf(g)})">✕</span>
+            </div>
+        `).join('');
+    }
+
+    function toggleGoal(i) {
+        goals[i].done = !goals[i].done;
+        if (goals[i].done) {
+            gsap.fromTo(event.target, { scale: 0.5 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
+        }
+        renderGoals();
+    }
+    function deleteGoal(i) {
+        const item = event.target.closest('.goal-item');
+        if (item) {
+            gsap.to(item, { opacity: 0, x: -20, height: 0, padding: 0, marginBottom: 0, duration: 0.3, onComplete: () => {
+                goals.splice(i, 1); renderGoals();
+            }});
+        } else {
+            goals.splice(i, 1); renderGoals();
+        }
+    }
+
+    // Goals/Values - all handled by event delegation above
+
+    // ===== VALUES (Multi-select + Radar) =====
+    const selectedValues = new Set();
+    const valueData = {
+        '求知': { quote: '「学而不思则罔，思而不学则殆。」—— 孔子', tags: ['终身学习', '批判性思维', '好奇心'], angle: 0 },
+        '真诚': { quote: '「诚者，天之道也；思诚者，人之道也。」—— 《中庸》', tags: ['诚实', '正直', '信任'], angle: 45 },
+        '自由': { quote: '「心即理也。此心无私欲之蔽，即是天理。」—— 王阳明', tags: ['独立思考', '自主选择', '内心自由'], angle: 90 },
+        '公正': { quote: '「无善无恶心之体，有善有恶意之动。」—— 王阳明', tags: ['公平', '客观', '同理心'], angle: 135 },
+        '创造': { quote: '「致良知，是谓知行合一。」创造源于对内心真实的回应。', tags: ['创新', '表达', '想象力'], angle: 180 },
+        '责任': { quote: '「知善知恶是良知，为善去恶是格物。」—— 王阳明', tags: ['担当', '承诺', '可靠'], angle: 225 },
+        '勇气': { quote: '「破山中贼易，破心中贼难。」—— 王阳明', tags: ['坚韧', '勇敢', '突破'], angle: 270 },
+        '智慧': { quote: '「知是行之始，行是知之成。」—— 王阳明《传习录》', tags: ['洞察', '判断力', '反思'], angle: 315 },
+    };
+
+    function drawRadar() {
+        if (selectedValues.size === 0) {
+            document.getElementById('radar-container').style.display = 'none';
+            return;
+        }
+        document.getElementById('radar-container').style.display = 'block';
+        const canvas = document.getElementById('values-radar');
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width, h = canvas.height;
+        const cx = w / 2, cy = h / 2, r = 100;
+        ctx.clearRect(0, 0, w, h);
+
+        const allValues = Object.keys(valueData);
+        const n = allValues.length;
+
+        // Draw grid
+        for (let level = 1; level <= 4; level++) {
+            ctx.beginPath();
+            for (let i = 0; i <= n; i++) {
+                const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+                const lr = r * (level / 4);
+                const x = cx + lr * Math.cos(angle);
+                const y = cy + lr * Math.sin(angle);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = `rgba(201, 168, 76, ${0.04 + level * 0.02})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Draw axes
+        allValues.forEach((v, i) => {
+            const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+            ctx.strokeStyle = 'rgba(201, 168, 76, 0.06)';
+            ctx.stroke();
+        });
+
+        // Draw data
+        ctx.beginPath();
+        allValues.forEach((v, i) => {
+            const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+            const val = selectedValues.has(v) ? 1 : 0.15;
+            const x = cx + r * val * Math.cos(angle);
+            const y = cy + r * val * Math.sin(angle);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(201, 168, 76, 0.08)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(201, 168, 76, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw points
+        allValues.forEach((v, i) => {
+            const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+            const val = selectedValues.has(v) ? 1 : 0.15;
+            const x = cx + r * val * Math.cos(angle);
+            const y = cy + r * val * Math.sin(angle);
+            ctx.beginPath();
+            ctx.arc(x, y, selectedValues.has(v) ? 4 : 2, 0, Math.PI * 2);
+            ctx.fillStyle = selectedValues.has(v) ? '#e0c868' : 'rgba(201,168,76,0.3)';
+            ctx.fill();
+            if (selectedValues.has(v)) {
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(201, 168, 76, 0.15)';
+                ctx.fill();
+            }
+        });
+
+        // Labels
+        ctx.font = '11px "LXGW WenKai", sans-serif';
+        ctx.textAlign = 'center';
+        allValues.forEach((v, i) => {
+            const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+            const lx = cx + (r + 22) * Math.cos(angle);
+            const ly = cy + (r + 22) * Math.sin(angle);
+            ctx.fillStyle = selectedValues.has(v) ? '#e0c868' : 'rgba(200,196,184,0.4)';
+            ctx.fillText(v, lx, ly + 4);
+        });
+    }
+
+    function updateValueResult() {
+        const resultBox = document.getElementById('value-result-box');
+        const resultText = document.getElementById('value-result-text');
+        const resultQuote = document.getElementById('value-result-quote');
+        const resultTags = document.getElementById('value-result-tags');
+
+        if (selectedValues.size === 0) {
+            resultBox.style.display = 'none';
+            drawRadar();
+            return;
+        }
+
+        resultBox.style.display = 'block';
+        const names = Array.from(selectedValues);
+        resultText.textContent = `你选择了 ${names.length} 个核心价值观：${names.join('、')}`;
+
+        // Show quotes for selected values
+        const quotes = names.map(v => valueData[v].quote).join('\n\n');
+        resultQuote.textContent = quotes;
+
+        // Collect tags
+        const allTags = names.flatMap(v => valueData[v].tags);
+        resultTags.innerHTML = allTags.map(t => `<span class="value-result-tag">${t}</span>`).join('');
+
+        resultBox.style.opacity = '0';
+        gsap.to(resultBox, { opacity: 1, duration: 0.5 });
+
+        drawRadar();
+    }
+
+    // Value cards - handled by event delegation above
+
+    // ===== Page entrance animation =====
+    gsap.from('.tools-hero', { opacity: 0, y: 30, duration: 0.8, ease: 'power2.out' });
+    gsap.from('.tools-stats', { opacity: 0, y: 20, duration: 0.8, delay: 0.2, ease: 'power2.out' });
+    gsap.from('.tab-nav-upgrade', { opacity: 0, y: 20, duration: 0.8, delay: 0.4, ease: 'power2.out' });
+    gsap.from('.glass-card', { opacity: 0, y: 30, duration: 0.8, delay: 0.5, ease: 'power2.out' });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研讨分享 · 心光宇宙</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=LXGW+WenKai&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: #06060c;
+            color: #e8e4dc;
+            font-family: 'LXGW WenKai', 'Noto Sans SC', sans-serif;
+            overflow-y: auto;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        /* ===== PARTICLE CANVAS ===== */
+        #semParticles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; pointer-events: none;
+        }
+        a { color: inherit; text-decoration: none; }
+
+        /* ===== NAV ===== */
+        .sem-nav {
+            position: fixed; top: 0; left: 0; width: 100%; height: 56px; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(8, 8, 14, 0.85);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(201, 168, 76, 0.08);
+        }
+        .sem-nav-inner { display: flex; align-items: center; gap: 4px; }
+        .sem-nav-logo {
+            font-family: 'ZCOOL XiaoWei', serif; font-size: 1rem; margin-right: 14px;
+            background: linear-gradient(135deg, #f0d060, #c89030, #e0c868);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .sem-nav-link {
+            padding: 7px 14px; font-size: 0.8rem; color: #8a8680; border-radius: 8px;
+            cursor: pointer; transition: all 0.3s; user-select: none;
+        }
+        .sem-nav-link:hover { color: #e8e4dc; background: rgba(201, 168, 76, 0.06); }
+        .sem-nav-link.active { color: #e0c868; background: rgba(201, 168, 76, 0.1); }
+        .sem-nav-div { width: 1px; height: 18px; background: rgba(201, 168, 76, 0.12); margin: 0 4px; }
+
+        /* ===== HERO ===== */
+        .sem-hero {
+            text-align: center; padding: 100px 24px 20px; position: relative;
+        }
+        .sem-hero-tag {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.58rem;
+            letter-spacing: 0.35em; color: #8a8680; display: block; margin-bottom: 10px;
+        }
+        .sem-hero h1 {
+            font-family: 'Ma Shan Zheng', cursive; font-size: clamp(2rem, 4.5vw, 2.8rem);
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #f0d060 0%, #e0c060 30%, #c89030 60%, #f0d060 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            animation: heroShimmer 6s ease-in-out infinite;
+            filter: drop-shadow(0 2px 16px rgba(240, 208, 96, 0.25)) drop-shadow(0 2px 10px rgba(201, 168, 76, 0.2));
+        }
+        @keyframes heroShimmer { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .sem-hero-desc {
+            font-family: 'ZCOOL XiaoWei', serif; font-size: 0.88rem;
+            color: #d0ccc4; letter-spacing: 0.1em; margin-bottom: 6px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+        .sem-hero-line {
+            width: 50px; height: 1px; margin: 16px auto 0;
+            background: linear-gradient(90deg, transparent, #c9a84c, transparent);
+            position: relative;
+        }
+        .sem-hero-line::after {
+            content: '◆'; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); font-size: 0.4rem; color: #c9a84c;
+            background: #0a0a10; padding: 0 8px;
+        }
+
+        /* ===== STATS ===== */
+        .sem-stats {
+            display: flex; justify-content: center; gap: 40px;
+            padding: 24px 24px 10px;
+        }
+        .sem-stat { text-align: center; position: relative; }
+        .sem-stat::after {
+            content: ''; position: absolute; right: -20px; top: 50%;
+            transform: translateY(-50%); width: 1px; height: 22px;
+            background: linear-gradient(180deg, transparent, rgba(201,168,76,0.15), transparent);
+        }
+        .sem-stat:last-child::after { display: none; }
+        .sem-stat-num {
+            font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 500;
+            background: linear-gradient(135deg, #f0d060, #c89030);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            filter: drop-shadow(0 0 8px rgba(240, 208, 96, 0.3));
+        }
+        .sem-stat-label {
+            font-size: 0.6rem; color: #b0aca4; letter-spacing: 0.15em; margin-top: 2px;
+        }
+
+        /* ===== TABS ===== */
+        .sem-tabs {
+            display: flex; justify-content: center; gap: 0;
+            padding: 4px; margin: 28px auto 28px;
+            max-width: 520px; width: calc(100% - 32px);
+            background: rgba(14, 14, 35, 0.6);
+            border-radius: 16px;
+            border: 1px solid rgba(201, 168, 76, 0.08);
+            backdrop-filter: blur(16px);
+        }
+        .sem-tab {
+            flex: 1; padding: 12px 6px; border-radius: 12px; border: none;
+            background: transparent; color: #8a8680;
+            font-family: 'LXGW WenKai', sans-serif; font-size: 0.78rem; font-weight: 500;
+            cursor: pointer; transition: all 0.35s;
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+        }
+        .sem-tab .tab-ico { font-size: 1.2rem; transition: all 0.35s; }
+        .sem-tab .tab-en {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.48rem;
+            letter-spacing: 0.1em; opacity: 0.4;
+        }
+        .sem-tab.active {
+            background: rgba(201, 168, 76, 0.1); color: #e0c868;
+            box-shadow: 0 3px 14px rgba(0, 0, 0, 0.15), 0 0 20px rgba(240, 208, 96, 0.06);
+        }
+        .sem-tab.active .tab-ico { transform: scale(1.15); }
+        .sem-tab.active .tab-en { opacity: 0.7; color: #c9a84c; }
+        .sem-tab:hover:not(.active) { color: #d0ccc4; background: rgba(201,168,76,0.03); }
+
+        .sem-container { max-width: 760px; margin: 0 auto; padding: 0 20px 80px; }
+
+        /* ===== PUBLISH BUTTON ===== */
+        .sem-publish-btn {
+            display: flex; align-items: center; gap: 8px;
+            margin: 24px 0 8px; padding: 10px 24px;
+            border-radius: 14px; border: 1px solid rgba(240, 208, 96, 0.25);
+            background: rgba(240, 208, 96, 0.06);
+            color: #e0c868; font-family: 'LXGW WenKai', sans-serif;
+            font-size: 0.85rem; cursor: pointer; transition: all 0.35s;
+            box-shadow: 0 0 20px rgba(240, 208, 96, 0.05);
+        }
+        .sem-publish-btn:hover {
+            background: rgba(240, 208, 96, 0.12); border-color: rgba(240, 208, 96, 0.4);
+            transform: translateY(-2px); box-shadow: 0 6px 24px rgba(240, 208, 96, 0.12), 0 0 30px rgba(240, 208, 96, 0.08);
+        }
+        .sem-publish-btn i { font-size: 0.75rem; }
+
+        /* ===== MODAL ===== */
+        .sem-modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65); z-index: 200;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .sem-modal-overlay.open { display: flex; animation: modalBgIn 0.3s ease; }
+        @keyframes modalBgIn { from { opacity: 0; } to { opacity: 1; } }
+        .sem-modal {
+            width: 92%; max-width: 520px;
+            background: #14142c; border: 1px solid rgba(201,168,76,0.18);
+            border-radius: 22px; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modalSlideIn { from { opacity: 0; transform: translateY(30px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .sem-modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px 22px; border-bottom: 1px solid rgba(201,168,76,0.08);
+        }
+        .sem-modal-title {
+            font-family: 'ZCOOL XiaoWei', serif; font-size: 1.05rem; color: #ffffff;
+        }
+        .sem-modal-close {
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(201,168,76,0.06); color: #b0aca4;
+            cursor: pointer; transition: all 0.3s; font-size: 0.75rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sem-modal-close:hover { background: rgba(201,168,76,0.12); color: #e0c868; }
+        .sem-modal-body { padding: 20px 22px; }
+        .sem-form-group { margin-bottom: 16px; }
+        .sem-form-label {
+            display: block; font-size: 0.72rem; color: #b0aca4;
+            margin-bottom: 6px; letter-spacing: 0.05em;
+        }
+        .sem-form-input, .sem-form-textarea {
+            width: 100%; padding: 10px 14px; border-radius: 12px;
+            border: 1px solid rgba(201,168,76,0.12);
+            background: rgba(10,10,25,0.6); color: #e8e4dc;
+            font-family: 'LXGW WenKai', sans-serif; font-size: 0.82rem;
+            outline: none; transition: all 0.3s;
+        }
+        .sem-form-input::placeholder, .sem-form-textarea::placeholder { color: rgba(200,196,184,0.25); }
+        .sem-form-input:focus, .sem-form-textarea:focus {
+            border-color: rgba(201,168,76,0.3); box-shadow: 0 0 12px rgba(201,168,76,0.06);
+        }
+        .sem-form-textarea { resize: vertical; min-height: 80px; }
+        .sem-form-datetime { color-scheme: dark; }
+        .sem-time-picker { position: relative; }
+        .sem-time-trigger {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px; border-radius: 12px;
+            border: 1px solid rgba(201,168,76,0.12);
+            background: rgba(10,10,25,0.6); cursor: pointer;
+            transition: all 0.3s; font-size: 0.82rem;
+        }
+        .sem-time-trigger:hover { border-color: rgba(201,168,76,0.25); }
+        .sem-time-trigger.active { border-color: rgba(201,168,76,0.35); box-shadow: 0 0 12px rgba(201,168,76,0.06); }
+        .sem-time-dropdown {
+            display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+            background: #1a1a38; border: 1px solid rgba(201,168,76,0.18);
+            border-radius: 14px; padding: 14px; z-index: 10;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            animation: modalSlideIn 0.25s ease;
+        }
+        .sem-time-dropdown.open { display: block; }
+        .sem-time-row { display: flex; gap: 4px; align-items: center; margin-bottom: 10px; }
+        .sem-date-input { flex: 1; min-width: 0; color-scheme: dark; font-size: 0.78rem; padding: 8px 10px; }
+        .sem-time-select {
+            width: 72px; flex-shrink: 0; color-scheme: dark; font-size: 0.78rem; padding: 8px 4px;
+            -webkit-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a8680'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 4px center;
+            padding-right: 18px;
+        }
+        .sem-time-colon { color: #b0aca4; font-size: 0.9rem; font-weight: 600; flex-shrink: 0; }
+        .sem-time-confirm {
+            width: 100%; padding: 9px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, #e0c868, #c89030);
+            color: #0a0a10; font-family: 'LXGW WenKai', sans-serif;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .sem-time-confirm:hover { box-shadow: 0 4px 14px rgba(201,168,76,0.2); }
+        .sem-form-row { display: flex; gap: 16px; }
+        .sem-form-row .sem-form-group { flex: 1; }
+        .sem-form-radio { display: flex; gap: 16px; }
+        .sem-radio {
+            display: flex; align-items: center; gap: 6px; cursor: pointer;
+            font-size: 0.78rem; color: #d0ccc4; transition: all 0.3s;
+        }
+        .sem-radio input { display: none; }
+        .sem-radio-dot {
+            width: 16px; height: 16px; border-radius: 50%;
+            border: 2px solid rgba(201,168,76,0.2); transition: all 0.3s;
+            position: relative;
+        }
+        .sem-radio-dot::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 7px; height: 7px; border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .sem-radio-dot.online::after { background: #60c878; }
+        .sem-radio-dot.offline::after { background: #e0c868; }
+        .sem-radio-dot.hot::after { background: #e06050; }
+        .sem-radio-dot.learn::after { background: #60a0e0; }
+        .sem-radio-dot.collab::after { background: #60c878; }
+        .sem-radio input:checked + .sem-radio-dot { border-color: rgba(201,168,76,0.5); }
+        .sem-radio input:checked + .sem-radio-dot::after { transform: translate(-50%, -50%) scale(1); }
+        .sem-modal-footer {
+            display: flex; justify-content: flex-end; gap: 10px;
+            padding: 14px 22px; border-top: 1px solid rgba(201,168,76,0.08);
+        }
+        .sem-modal-cancel {
+            padding: 9px 20px; border-radius: 12px; border: 1px solid rgba(201,168,76,0.12);
+            background: transparent; color: #b0aca4;
+            font-family: 'LXGW WenKai', sans-serif; font-size: 0.8rem;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .sem-modal-cancel:hover { border-color: rgba(201,168,76,0.25); color: #d0ccc4; }
+        .sem-modal-submit {
+            padding: 9px 24px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #e0c868, #c89030);
+            color: #0a0a10; font-family: 'LXGW WenKai', sans-serif;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .sem-modal-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(201,168,76,0.2); }
+
+        /* ===== PANELS ===== */
+        .sem-panel { display: none; }
+        .sem-panel.active { display: block; }
+
+        /* ===== CARD ===== */
+        .s-card {
+            background: rgba(14, 14, 35, 0.7);
+            border: 1px solid rgba(201, 168, 76, 0.15);
+            border-radius: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 0 40px rgba(201, 168, 76, 0.03), inset 0 1px 0 rgba(255,255,255,0.03);
+            position: relative; overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        }
+        .s-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent 5%, rgba(240,208,96,0.4) 30%, rgba(240,208,96,0.6) 50%, rgba(240,208,96,0.4) 70%, transparent 95%);
+        }
+        .s-card::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(240, 208, 96, 0.05) 0%, transparent 50%);
+            pointer-events: none; transition: opacity 0.3s; opacity: 0;
+        }
+        .s-card:hover::after { opacity: 1; }
+        .s-card:hover {
+            border-color: rgba(240, 208, 96, 0.25);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 36px rgba(0, 0, 0, 0.35), 0 0 60px rgba(240, 208, 96, 0.05), 0 0 20px rgba(201, 168, 76, 0.05);
+        }
+
+        /* Card Top */
+        .s-card-top {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 18px 0;
+        }
+        .s-mode {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 16px;
+            font-size: 0.6rem; font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.06em; font-weight: 500;
+        }
+        .s-mode.online { background: rgba(96, 200, 120, 0.1); color: #60c878; border: 1px solid rgba(96, 200, 120, 0.2); }
+        .s-mode.offline { background: rgba(201, 168, 76, 0.1); color: #e0c868; border: 1px solid rgba(201, 168, 76, 0.2); }
+        .s-time {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+            color: #b0aca4; letter-spacing: 0.04em;
+        }
+
+        /* Card Body */
+        .s-card-body { padding: 10px 18px 0; }
+        .s-card-title {
+            font-family: 'ZCOOL XiaoWei', serif; font-size: 1.05rem;
+            color: #ffffff; line-height: 1.6; margin-bottom: 6px; font-weight: 600;
+            text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+        }
+        .s-card-desc {
+            font-size: 0.8rem; color: #d8d4cc; line-height: 1.85;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* Card Footer */
+        .s-card-foot {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 18px 14px;
+            border-top: 1px solid rgba(201, 168, 76, 0.06);
+            margin-top: 12px;
+        }
+        .s-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .s-tag {
+            font-size: 0.58rem; padding: 3px 10px; border-radius: 10px;
+            background: rgba(201, 168, 76, 0.06); color: #c8c4b8;
+            border: 1px solid rgba(201, 168, 76, 0.06);
+        }
+        .s-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .s-act {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 0.65rem; color: #b0aca4; cursor: pointer;
+            transition: all 0.3s; padding: 3px 0; user-select: none;
+        }
+        .s-act:hover { color: #e0c868; }
+        .s-act.liked { color: #e06050; }
+        .s-act i { font-size: 0.62rem; transition: all 0.3s; }
+        .s-act-num {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #c9a84c;
+        }
+
+        /* Join Button */
+        .s-join {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 14px; border-radius: 16px;
+            border: 1px solid rgba(201,168,76,0.18); background: transparent;
+            color: #e0c868; font-family: 'LXGW WenKai', sans-serif;
+            font-size: 0.68rem; cursor: pointer; transition: all 0.35s; user-select: none;
+        }
+        .s-join:hover { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.3); }
+        .s-join.joined { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.35); color: #f0d060; }
+        .s-join-num { font-family: 'JetBrains Mono', monospace; font-size: 0.64rem; }
+
+        /* Author Row (for collab tab) */
+        .s-author-row {
+            display: flex; align-items: center; gap: 10px; padding: 14px 18px 0;
+        }
+        .s-avatar {
+            width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
+            border: 1px solid rgba(201,168,76,0.12);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; color: #e0c868;
+        }
+        .s-author-info { flex: 1; }
+        .s-author-name {
+            font-family: 'ZCOOL XiaoWei', serif; font-size: 0.88rem;
+            color: #ffffff; text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+        .s-author-dept { font-size: 0.64rem; color: #b0aca4; margin-top: 2px; }
+        .s-follow {
+            padding: 5px 14px; border-radius: 16px;
+            border: 1px solid rgba(201,168,76,0.18); background: transparent;
+            color: #e0c868; font-family: 'LXGW WenKai', sans-serif;
+            font-size: 0.66rem; cursor: pointer; transition: all 0.3s;
+        }
+        .s-follow:hover { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.3); }
+
+        /* Comments */
+        .s-comments {
+            display: none; padding: 0 18px 14px;
+            border-top: 1px solid rgba(201,168,76,0.05);
+        }
+        .s-comments.open { display: block; animation: panelIn 0.3s ease; }
+        .s-cmt-input-row { display: flex; gap: 8px; margin: 12px 0 10px; }
+        .s-cmt-input {
+            flex: 1; padding: 9px 12px; border-radius: 10px;
+            border: 1px solid rgba(201,168,76,0.12);
+            background: rgba(10,10,25,0.5); color: #e8e4dc;
+            font-family: 'LXGW WenKai', sans-serif; font-size: 0.8rem;
+            outline: none; transition: all 0.3s;
+        }
+        .s-cmt-input::placeholder { color: rgba(200,196,184,0.3); }
+        .s-cmt-input:focus { border-color: rgba(201,168,76,0.25); box-shadow: 0 0 10px rgba(201,168,76,0.08); }
+        .s-cmt-send {
+            padding: 9px 16px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, #e0c868, #c89030);
+            color: #0a0a10; font-family: 'LXGW WenKai', sans-serif;
+            font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .s-cmt-send:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(201,168,76,0.2); }
+        .s-cmt-list { display: flex; flex-direction: column; gap: 8px; }
+        .s-cmt-item {
+            display: flex; gap: 8px; padding: 8px;
+            background: rgba(201,168,76,0.02); border-radius: 10px;
+            border: 1px solid rgba(201,168,76,0.04);
+        }
+        .s-cmt-avatar {
+            width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04));
+            border: 1px solid rgba(201,168,76,0.1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; color: #e0c868;
+        }
+        .s-cmt-body { flex: 1; }
+        .s-cmt-name { font-size: 0.72rem; color: #e0c868; font-weight: 500; margin-bottom: 2px; }
+        .s-cmt-text { font-size: 0.78rem; color: #d0ccc4; line-height: 1.6; }
+        .s-cmt-time {
+            font-size: 0.56rem; color: #8a8680; margin-top: 3px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .s-cmt-like {
+            font-size: 0.56rem; color: #8a8680; cursor: pointer;
+            transition: all 0.3s; margin-top: 3px;
+            display: inline-flex; align-items: center; gap: 3px;
+        }
+        .s-cmt-like:hover { color: #e06050; }
+        .s-cmt-like.liked { color: #e06050; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sem-stats { gap: 20px; }
+            .sem-nav-link { padding: 6px 8px; font-size: 0.68rem; }
+            .s-card-foot { flex-direction: column; gap: 8px; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav class="sem-nav">
+        <div class="sem-nav-inner">
+            <a class="sem-nav-logo" href="index.html">☯ 心光宇宙</a>
+            <a class="sem-nav-link" href="index.html">首页</a>
+            <a class="sem-nav-link" href="index.html">心学</a>
+            <a class="sem-nav-link" href="index.html">科学</a>
+            <a class="sem-nav-link" href="index.html">分享</a>
+            <div class="sem-nav-div"></div>
+            <a class="sem-nav-link" href="tools.html">工具</a>
+            <a class="sem-nav-link active" href="seminar.html">研讨</a>
+            <a class="sem-nav-link" href="message.html">留言</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <div class="sem-hero">
+        <span class="sem-hero-tag">SEMINAR & DISCUSSION</span>
+        <h1>研讨分享</h1>
+        <p class="sem-hero-desc">深度话题研讨，多元视角碰撞，在思辨中接近真理</p>
+        <div class="sem-hero-line"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="sem-stats">
+        <div class="sem-stat"><div class="sem-stat-num">12</div><div class="sem-stat-label">活跃研讨</div></div>
+        <div class="sem-stat"><div class="sem-stat-num">657</div><div class="sem-stat-label">参与人次</div></div>
+        <div class="sem-stat"><div class="sem-stat-num">2.4k</div><div class="sem-stat-label">讨论回复</div></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="sem-tabs">
+        <button class="sem-tab active" data-tab="p-hot"><span class="tab-ico">🔥</span><span>热门研讨</span><span class="tab-en">HOT TOPICS</span></button>
+        <button class="sem-tab" data-tab="p-learn"><span class="tab-ico">📚</span><span>学习交流</span><span class="tab-en">LEARNING</span></button>
+        <button class="sem-tab" data-tab="p-collab"><span class="tab-ico">🤝</span><span>合作社交</span><span class="tab-en">SOCIAL</span></button>
+    </div>
+
+    <!-- PUBLISH BUTTON -->
+    <div style="max-width:760px;margin:0 auto;padding:0 20px;">
+        <button class="sem-publish-btn" id="publishBtn">
+            <i class="fas fa-plus"></i> 发起研讨
+        </button>
+    </div>
+
+    <!-- PUBLISH MODAL -->
+    <div class="sem-modal-overlay" id="publishModal">
+        <div class="sem-modal">
+            <div class="sem-modal-header">
+                <span class="sem-modal-title">发起研讨</span>
+                <button class="sem-modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="sem-modal-body">
+                <div class="sem-form-group">
+                    <label class="sem-form-label">研讨标题</label>
+                    <input type="text" class="sem-form-input" id="pubTitle" placeholder="输入研讨话题...">
+                </div>
+                <div class="sem-form-row">
+                    <div class="sem-form-group">
+                        <label class="sem-form-label">研讨方式</label>
+                        <div class="sem-form-radio">
+                            <label class="sem-radio"><input type="radio" name="pubMode" value="online" checked><span class="sem-radio-dot online"></span> 线上</label>
+                            <label class="sem-radio"><input type="radio" name="pubMode" value="offline"><span class="sem-radio-dot offline"></span> 线下</label>
+                        </div>
+                    </div>
+                    <div class="sem-form-group">
+                        <label class="sem-form-label">时间</label>
+                        <div class="sem-time-picker">
+                            <div class="sem-time-trigger" id="timeTrigger">
+                                <i class="far fa-clock"></i>
+                                <span id="timeDisplay" style="color:rgba(200,196,184,0.3)">点击选择时间</span>
+                                <i class="fas fa-chevron-down" style="font-size:0.55rem;color:#8a8680;margin-left:auto"></i>
+                            </div>
+                            <div class="sem-time-dropdown" id="timeDropdown">
+                                <div class="sem-time-row">
+                                    <input type="date" class="sem-form-input sem-date-input" id="pubDate">
+                                </div>
+                                <div class="sem-time-row">
+                                    <select class="sem-form-input sem-time-select" id="pubHour"></select>
+                                    <span class="sem-time-colon">:</span>
+                                    <select class="sem-form-input sem-time-select" id="pubMinute"></select>
+                                </div>
+                                <button class="sem-time-confirm" id="timeConfirm">确定</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="sem-form-group">
+                        <label class="sem-form-label">所属板块</label>
+                        <div class="sem-form-radio">
+                            <label class="sem-radio"><input type="radio" name="pubTab" value="p-hot" checked><span class="sem-radio-dot hot"></span> 热门研讨</label>
+                            <label class="sem-radio"><input type="radio" name="pubTab" value="p-learn"><span class="sem-radio-dot learn"></span> 学习交流</label>
+                            <label class="sem-radio"><input type="radio" name="pubTab" value="p-collab"><span class="sem-radio-dot collab"></span> 合作社交</label>
+                        </div>
+                    </div>
+                <div class="sem-form-group">
+                    <label class="sem-form-label">内容简介</label>
+                    <textarea class="sem-form-textarea" id="pubDesc" placeholder="描述研讨内容、讨论方向..." rows="4"></textarea>
+                </div>
+                <div class="sem-form-group">
+                    <label class="sem-form-label">标签（用空格分隔，最多3个）</label>
+                    <input type="text" class="sem-form-input" id="pubTags" placeholder="如：心学 量子力学 跨学科">
+                </div>
+            </div>
+            <div class="sem-modal-footer">
+                <button class="sem-modal-cancel" id="modalCancel">取消</button>
+                <button class="sem-modal-submit" id="modalSubmit">发布研讨</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANELS -->
+    <div class="sem-container">
+
+        <!-- ====== 热门研讨 ====== -->
+        <div class="sem-panel active" id="p-hot">
+            <div class="s-card">
+                <div class="s-card-top">
+                    <span class="s-mode online"><i class="fas fa-circle" style="font-size:0.4rem"></i> 线上</span>
+                    <span class="s-time"><i class="far fa-clock"></i> 2026.04.15 19:00</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">「心即理」在现代科学中是否有对应？</div>
+                    <div class="s-card-desc">从量子力学的测量问题到泛心论，现代物理学似乎在重新审视意识与物质的关系。王阳明五百年前的洞见，是否正在被科学验证？</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">心学 × 物理</span><span class="s-tag">量子力学</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">89</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">156</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-top">
+                    <span class="s-mode offline"><i class="fas fa-map-marker-alt" style="font-size:0.5rem"></i> 线下</span>
+                    <span class="s-time"><i class="far fa-clock"></i> 2026.04.18 14:00</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">如何用批判性思维应对信息过载？</div>
+                    <div class="s-card-desc">每天面对海量信息，如何辨别真伪？如何避免信息茧房？结合《思辨与立场》的思维标准，构建属于自己的认知防线。</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">批判性思维</span><span class="s-tag">信息素养</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">156</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">234</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-top">
+                    <span class="s-mode online"><i class="fas fa-circle" style="font-size:0.4rem"></i> 线上</span>
+                    <span class="s-time"><i class="far fa-clock"></i> 2026.04.20 20:00</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">「致良知」与心理健康</div>
+                    <div class="s-card-desc">王阳明的「致良知」强调回归内心的本善，这与积极心理学、接纳承诺疗法（ACT）有着惊人的相似之处。</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">心学 × 心理学</span><span class="s-tag">正念</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">234</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">312</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-top">
+                    <span class="s-mode offline"><i class="fas fa-map-marker-alt" style="font-size:0.5rem"></i> 线下</span>
+                    <span class="s-time"><i class="far fa-clock"></i> 2026.04.22 15:30</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">从熵增定律看人生规划</div>
+                    <div class="s-card-desc">宇宙趋向无序，但生命是逆熵而行的奇迹。作为大学生，如何在学业、社交、个人成长中建立自己的「反熵增系统」？</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">物理学 × 人生</span><span class="s-tag">自我管理</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">178</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">267</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-top">
+                    <span class="s-mode online"><i class="fas fa-circle" style="font-size:0.4rem"></i> 线上</span>
+                    <span class="s-time"><i class="far fa-clock"></i> 2026.04.25 19:30</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">光的波粒二象性与思维方式</div>
+                    <div class="s-card-desc">光既是波也是粒子——这种「互补原理」是否也适用于我们的思维方式？在直觉与分析、感性与理性之间，我们是否也需要一种「互补」的智慧？</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">光学 × 哲学</span><span class="s-tag">思维方式</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">112</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">198</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== 学习交流 ====== -->
+        <div class="sem-panel" id="p-learn">
+            <div class="s-card">
+                <div class="s-card-top">
+                    <span class="s-mode offline"><i class="fas fa-map-marker-alt" style="font-size:0.5rem"></i> 线下</span>
+                    <span class="s-time"><i class="far fa-clock"></i> 每周三 18:30</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">《传习录》读书会 · 知行合一的现代启示</div>
+                    <div class="s-card-desc">王阳明提出「知是行之始，行是知之成」，这启示我们学习不应停留在知识层面，而要将所学转化为行动。每周精读一章，结合大学生活实践讨论。</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">心学研读</span><span class="s-tag">定期活动</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">128</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">32</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-top">
+                    <span class="s-mode online"><i class="fas fa-circle" style="font-size:0.4rem"></i> 线上</span>
+                    <span class="s-time"><i class="far fa-clock"></i> 每周六 20:00</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">从热力学熵增到心理熵：为什么我们需要「心理减熵」？</div>
+                    <div class="s-card-desc">熵增定律告诉我们，封闭系统总是趋向无序。我们的心理也是如此——如果不主动管理，焦虑和混乱会不断累积。如何建立开放的心理系统？</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">科学探索</span><span class="s-tag">心理学</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">96</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">24</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-top">
+                    <span class="s-mode offline"><i class="fas fa-map-marker-alt" style="font-size:0.5rem"></i> 线下</span>
+                    <span class="s-time"><i class="far fa-clock"></i> 2026.04.28 14:00</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">《思辨与立场》精读 · 如何识别认知偏差</div>
+                    <div class="s-card-desc">确认偏差、锚定效应、可得性启发……这些认知偏差如同思维的盲点。认识它们，是建立思维免疫系统的第一步。</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">思辨训练</span><span class="s-tag">读书笔记</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">156</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">45</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-top">
+                    <span class="s-mode online"><i class="fas fa-circle" style="font-size:0.4rem"></i> 线上</span>
+                    <span class="s-time"><i class="far fa-clock"></i> 2026.05.01 19:00</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">21天习惯养成实验 · 用科学方法重塑日常</div>
+                    <div class="s-card-desc">结合心理学中的习惯回路理论（Cue-Routine-Reward），设计一套21天实验计划，记录每一天的变化。线上打卡 + 每周复盘分享。</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">习惯养成</span><span class="s-tag">21天挑战</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">203</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">67</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== 合作社交 ====== -->
+        <div class="sem-panel" id="p-collab">
+            <div class="s-card">
+                <div class="s-author-row">
+                    <div class="s-avatar">李</div>
+                    <div class="s-author-info"><div class="s-author-name">李明远</div><div class="s-author-dept">哲学系 · 大三 · 专注阳明心学研究三年</div></div>
+                    <button class="s-follow">+ 关注</button>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">寻找心学研讨伙伴 · 「心学与现代心理学对话」论文</div>
+                    <div class="s-card-desc">正在撰写关于「心学与现代心理学对话」的论文，寻找对哲学感兴趣的同学一起研讨。有正念冥想经验者优先。</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">心学研究</span><span class="s-tag">论文写作</span><span class="s-tag">哲学讨论</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">86</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">42</span></span>
+                        <span class="s-act"><i class="fas fa-eye"></i> <span class="s-act-num">342</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-author-row">
+                    <div class="s-avatar">张</div>
+                    <div class="s-author-info"><div class="s-author-name">张思涵</div><div class="s-author-dept">物理系 · 研一 · 量子物理爱好者</div></div>
+                    <button class="s-follow">+ 关注</button>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">「物理与哲学」科普项目招募成员</div>
+                    <div class="s-card-desc">热衷于用物理学原理解释生活现象，正在做一个「物理与哲学」的科普项目。寻找有写作能力或设计能力的伙伴。</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">量子物理</span><span class="s-tag">科普写作</span><span class="s-tag">跨学科</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">64</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">28</span></span>
+                        <span class="s-act"><i class="fas fa-eye"></i> <span class="s-act-num">256</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-author-row">
+                    <div class="s-avatar">王</div>
+                    <div class="s-author-info"><div class="s-author-name">王子轩</div><div class="s-author-dept">心理学系 · 大二 · 批判性思维实践者</div></div>
+                    <button class="s-follow">+ 关注</button>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">「思维实验室」线上读书会 · 每周日晚</div>
+                    <div class="s-card-desc">运营「思维实验室」公众号，定期举办线上读书会。本期主题：《思辨与立场》精读 + 认知偏差工作坊。</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">批判性思维</span><span class="s-tag">读书会</span><span class="s-tag">公众号</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">47</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">19</span></span>
+                        <span class="s-act"><i class="fas fa-eye"></i> <span class="s-act-num">189</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-author-row">
+                    <div class="s-avatar">陈</div>
+                    <div class="s-author-info"><div class="s-author-name">陈雨桐</div><div class="s-author-dept">计算机系 · 大三 · 产品开发者</div></div>
+                    <button class="s-follow">+ 关注</button>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">「习惯养成」APP 寻找设计与心理学伙伴</div>
+                    <div class="s-card-desc">正在开发「习惯养成」APP，结合心理学和游戏化设计。寻找UI设计、心理学背景的伙伴一起打磨产品。</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags"><span class="s-tag">产品开发</span><span class="s-tag">习惯养成</span><span class="s-tag">UI设计</span></div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">105</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">56</span></span>
+                        <span class="s-act"><i class="fas fa-eye"></i> <span class="s-act-num">421</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /sem-container -->
+
+    <script>
+    // ===== DATA STORE =====
+    const store = {};
+    const presetComments = [
+        { name: '林小雨', avatar: '林', text: '这个话题很有深度，期待参与讨论！', time: '2小时前', likes: 12, liked: false },
+        { name: '赵明哲', avatar: '赵', text: '王阳明的思想确实和现代科学有很多契合点。', time: '5小时前', likes: 8, liked: false },
+        { name: '陈思远', avatar: '陈', text: '建议可以结合一些具体的实验案例来分析。', time: '1天前', likes: 5, liked: false },
+        { name: '周雨萱', avatar: '周', text: '一直在关注这个方向，终于有人组织了！', time: '1天前', likes: 15, liked: false },
+    ];
+
+    // ===== INIT DATA =====
+    function initData() {
+        document.querySelectorAll('.s-card').forEach((card, idx) => {
+            const key = 'c' + idx;
+            const nums = card.querySelectorAll('.s-act-num');
+            const users = nums[0] ? parseInt(nums[0].textContent) : 50;
+            const comments = nums[1] ? parseInt(nums[1].textContent) : 0;
+            store[key] = {
+                likes: Math.floor(users * 0.3), liked: false,
+                joinCount: Math.floor(users * 0.6), joined: false,
+                commentCount: comments, comments: []
+            };
+            // preset comments for first 3 cards
+            if (idx < 3) {
+                const n = Math.min(2 + idx, presetComments.length);
+                for (let i = 0; i < n; i++) {
+                    store[key].comments.push({ ...presetComments[i] });
+                }
+            }
+            card.dataset.key = key;
+        });
+    }
+
+    // ===== TAB SWITCH =====
+    function initTabs() {
+        document.querySelectorAll('.sem-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.sem-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.sem-panel').forEach(p => {
+                    p.classList.remove('active');
+                    // clear any GSAP residual inline styles on hidden panels
+                    p.querySelectorAll('.s-card').forEach(c => { c.style.opacity = ''; c.style.transform = ''; });
+                });
+                tab.classList.add('active');
+                const panel = document.getElementById(tab.dataset.tab);
+                panel.classList.add('active');
+                // animate cards in new panel
+                const cards = panel.querySelectorAll('.s-card');
+                cards.forEach(c => { c.style.opacity = '0'; c.style.transform = 'translateY(14px)'; });
+                requestAnimationFrame(() => {
+                    gsap.to(cards, { opacity: 1, y: 0, duration: 0.4, stagger: 0.06, ease: 'power2.out', clearProps: 'opacity,transform' });
+                });
+            });
+        });
+    }
+
+    // ===== LIKES =====
+    function initLikes() {
+        document.querySelectorAll('.s-act[data-type="like"]').forEach(act => {
+            act.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const card = act.closest('.s-card');
+                const key = card.dataset.key;
+                const d = store[key];
+                const icon = act.querySelector('i');
+                const numEl = act.querySelector('.s-act-num');
+                d.liked = !d.liked;
+                if (d.liked) {
+                    d.likes++;
+                    act.classList.add('liked');
+                    icon.className = 'fas fa-heart';
+                    numEl.style.color = '#e06050';
+                } else {
+                    d.likes = Math.max(0, d.likes - 1);
+                    act.classList.remove('liked');
+                    icon.className = 'fas fa-users';
+                    numEl.style.color = '';
+                }
+                numEl.textContent = d.liked ? d.likes : d.joinCount;
+            });
+        });
+    }
+
+    // ===== COMMENTS =====
+    function initComments() {
+        document.querySelectorAll('.s-act[data-type="comment"]').forEach(act => {
+            act.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleComments(act.closest('.s-card'));
+            });
+        });
+    }
+
+    function toggleComments(card) {
+        const key = card.dataset.key;
+        let box = card.querySelector('.s-comments');
+        if (!box) {
+            box = document.createElement('div');
+            box.className = 's-comments';
+            box.innerHTML = `
+                <div class="s-cmt-input-row">
+                    <input type="text" class="s-cmt-input" placeholder="写下你的想法...">
+                    <button class="s-cmt-send">发送</button>
+                </div>
+                <div class="s-cmt-list"></div>`;
+            card.appendChild(box);
+            const sendBtn = box.querySelector('.s-cmt-send');
+            const input = box.querySelector('.s-cmt-input');
+            sendBtn.addEventListener('click', (e) => { e.stopPropagation(); sendComment(card, key, input, box); });
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendComment(card, key, input, box); });
+        }
+        box.classList.toggle('open');
+        if (box.classList.contains('open')) renderComments(key, box);
+    }
+
+    function sendComment(card, key, input, box) {
+        const text = input.value.trim();
+        if (!text) { gsap.to(input, { x: [-5, 5, -3, 3, 0], duration: 0.4 }); return; }
+        const d = store[key];
+        d.comments.unshift({ name: '我', avatar: '我', text, time: '刚刚', likes: 0, liked: false });
+        d.commentCount++;
+        // update comment count in footer
+        const commentActs = card.querySelectorAll('.s-act[data-type="comment"] .s-act-num');
+        if (commentActs.length) commentActs[0].textContent = d.commentCount;
+        input.value = '';
+        renderComments(key, box);
+        const first = box.querySelector('.s-cmt-item');
+        if (first) gsap.fromTo(first, { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.35 });
+        // button feedback
+        const sb = box.querySelector('.s-cmt-send');
+        const orig = sb.textContent;
+        sb.textContent = '✓';
+        sb.style.background = 'linear-gradient(135deg, #60c060, #40a040)';
+        setTimeout(() => { sb.textContent = orig; sb.style.background = ''; }, 800);
+    }
+
+    function renderComments(key, box) {
+        const d = store[key];
+        const list = box.querySelector('.s-cmt-list');
+        list.innerHTML = d.comments.map((c, i) => `
+            <div class="s-cmt-item">
+                <div class="s-cmt-avatar">${c.avatar}</div>
+                <div class="s-cmt-body">
+                    <div class="s-cmt-name">${c.name}</div>
+                    <div class="s-cmt-text">${c.text}</div>
+                    <div class="s-cmt-time">${c.time}</div>
+                    <div class="s-cmt-like ${c.liked ? 'liked' : ''}" data-ci="${i}">
+                        <i class="${c.liked ? 'fas' : 'far'} fa-heart"></i> ${c.likes > 0 ? c.likes : ''}
+                    </div>
+                </div>
+            </div>`).join('');
+        list.querySelectorAll('.s-cmt-like').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const ci = parseInt(btn.dataset.ci);
+                const c = d.comments[ci];
+                c.liked = !c.liked;
+                c.likes += c.liked ? 1 : -1;
+                btn.classList.toggle('liked', c.liked);
+                btn.innerHTML = `<i class="${c.liked ? 'fas' : 'far'} fa-heart"></i> ${c.likes > 0 ? c.likes : ''}`;
+            });
+        });
+    }
+
+    // ===== JOIN BUTTONS =====
+    function addJoinButtons() {
+        document.querySelectorAll('#p-hot .s-card, #p-learn .s-card').forEach(card => {
+            if (card.querySelector('.s-join')) return;
+            const actions = card.querySelector('.s-actions');
+            if (!actions) return;
+            const key = card.dataset.key;
+            const d = store[key];
+            const btn = document.createElement('button');
+            btn.className = 's-join';
+            btn.innerHTML = `<i class="far fa-hand-paper"></i> 想参加 <span class="s-join-num">${d.joinCount}</span>`;
+            actions.appendChild(btn);
+        });
+    }
+
+    function initJoins() {
+        document.querySelectorAll('.s-join').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const card = btn.closest('.s-card');
+                const key = card.dataset.key;
+                const d = store[key];
+                d.joined = !d.joined;
+                if (d.joined) {
+                    d.joinCount++;
+                    btn.classList.add('joined');
+                    btn.innerHTML = `<i class="fas fa-check"></i> 已参加 <span class="s-join-num">${d.joinCount}</span>`;
+                    gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
+                } else {
+                    d.joinCount--;
+                    btn.classList.remove('joined');
+                    btn.innerHTML = `<i class="far fa-hand-paper"></i> 想参加 <span class="s-join-num">${d.joinCount}</span>`;
+                }
+                // sync user count
+                const likeAct = card.querySelector('.s-act[data-type="like"] .s-act-num');
+                if (likeAct && !store[key].liked) likeAct.textContent = d.joinCount;
+            });
+        });
+    }
+
+    // ===== FOLLOW =====
+    function initFollows() {
+        document.querySelectorAll('.s-follow').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (btn.textContent.includes('关注')) {
+                    btn.textContent = '✓ 已关注';
+                    btn.style.background = 'rgba(201,168,76,0.1)';
+                    btn.style.borderColor = 'rgba(201,168,76,0.25)';
+                } else {
+                    btn.textContent = '+ 关注';
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                }
+            });
+        });
+    }
+
+    // ===== ENTRANCE ANIMATIONS =====
+    function playAnimations() {
+        gsap.fromTo('.sem-hero', { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out', clearProps: 'opacity,transform' });
+        gsap.fromTo('.sem-stats', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, delay: 0.12, ease: 'power2.out', clearProps: 'opacity,transform' });
+        gsap.fromTo('.sem-tabs', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, delay: 0.24, ease: 'power2.out', clearProps: 'opacity,transform' });
+        const activeCards = document.querySelectorAll('.sem-panel.active .s-card');
+        gsap.fromTo(activeCards, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, delay: 0.35, stagger: 0.07, ease: 'power2.out', clearProps: 'opacity,transform' });
+    }
+
+    // ===== TIME PICKER =====
+    let selectedTime = '';
+    function initTimePicker() {
+        const trigger = document.getElementById('timeTrigger');
+        const dropdown = document.getElementById('timeDropdown');
+        const display = document.getElementById('timeDisplay');
+        const hourSel = document.getElementById('pubHour');
+        const minSel = document.getElementById('pubMinute');
+        const confirmBtn = document.getElementById('timeConfirm');
+        const dateInput = document.getElementById('pubDate');
+
+        // populate hour (8-22) and minute (00,30)
+        for (let h = 8; h <= 22; h++) {
+            const opt = document.createElement('option');
+            opt.value = String(h).padStart(2, '0');
+            opt.textContent = String(h).padStart(2, '0') + ' 时';
+            hourSel.appendChild(opt);
+        }
+        ['00', '10', '20', '30', '40', '50'].forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m; opt.textContent = m + ' 分';
+            minSel.appendChild(opt);
+        });
+
+        // set default date to tomorrow
+        const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+        dateInput.value = tmr.toISOString().split('T')[0];
+
+        trigger.addEventListener('click', () => {
+            const isOpen = dropdown.classList.contains('open');
+            dropdown.classList.toggle('open');
+            trigger.classList.toggle('active');
+            if (!isOpen) dateInput.showPicker ? dateInput.showPicker() : null;
+        });
+
+        confirmBtn.addEventListener('click', () => {
+            const d = dateInput.value;
+            const h = hourSel.value;
+            const m = minSel.value;
+            if (!d) return;
+            selectedTime = d.replace(/-/g, '.') + ' ' + h + ':' + m;
+            display.textContent = selectedTime;
+            display.style.color = '#e8e4dc';
+            dropdown.classList.remove('open');
+            trigger.classList.remove('active');
+        });
+
+        // close on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.sem-time-picker')) {
+                dropdown.classList.remove('open');
+                trigger.classList.remove('active');
+            }
+        });
+    }
+
+    // ===== PUBLISH MODAL =====
+    function initPublishModal() {
+        const btn = document.getElementById('publishBtn');
+        const modal = document.getElementById('publishModal');
+        const closeBtn = document.getElementById('modalClose');
+        const cancelBtn = document.getElementById('modalCancel');
+        const submitBtn = document.getElementById('modalSubmit');
+
+        btn.addEventListener('click', () => modal.classList.add('open'));
+        closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+        cancelBtn.addEventListener('click', () => modal.classList.remove('open'));
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+
+        submitBtn.addEventListener('click', () => {
+            const title = document.getElementById('pubTitle').value.trim();
+            const desc = document.getElementById('pubDesc').value.trim();
+            const timeDisplay = selectedTime || '待定';
+            const tags = document.getElementById('pubTags').value.trim();
+            const mode = document.querySelector('input[name="pubMode"]:checked').value;
+            const tab = document.querySelector('input[name="pubTab"]:checked').value;
+
+            if (!title) { gsap.to('#pubTitle', { x: [-4,4,-3,3,0], duration: 0.4 }); return; }
+            if (!desc) { gsap.to('#pubDesc', { x: [-4,4,-3,3,0], duration: 0.4 }); return; }
+
+            // build card HTML
+            const modeClass = mode === 'online' ? 'online' : 'offline';
+            const modeIcon = mode === 'online'
+                ? '<i class="fas fa-circle" style="font-size:0.4rem"></i> 线上'
+                : '<i class="fas fa-map-marker-alt" style="font-size:0.5rem"></i> 线下';
+            const tagHtml = tags
+                ? tags.split(/\s+/).slice(0, 3).map(t => `<span class="s-tag">${t}</span>`).join('')
+                : '<span class="s-tag">新研讨</span>';
+
+            const card = document.createElement('div');
+            card.className = 's-card';
+            card.innerHTML = `
+                <div class="s-card-top">
+                    <span class="s-mode ${modeClass}">${modeIcon}</span>
+                    <span class="s-time"><i class="far fa-clock"></i> ${timeDisplay}</span>
+                </div>
+                <div class="s-card-body">
+                    <div class="s-card-title">${title}</div>
+                    <div class="s-card-desc">${desc}</div>
+                </div>
+                <div class="s-card-foot">
+                    <div class="s-tags">${tagHtml}</div>
+                    <div class="s-actions">
+                        <span class="s-act" data-type="like"><i class="fas fa-users"></i> <span class="s-act-num">0</span></span>
+                        <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">0</span></span>
+                    </div>
+                </div>`;
+
+            // insert at top of target panel
+            const panel = document.getElementById(tab);
+            panel.insertBefore(card, panel.firstChild);
+
+            // init data & events for new card
+            const key = 'c' + Date.now();
+            store[key] = { likes: 0, liked: false, joinCount: 0, joined: false, commentCount: 0, comments: [] };
+            card.dataset.key = key;
+            initCardEvents(card, key);
+
+            // add join button if hot/learn
+            if (tab === 'p-hot' || tab === 'p-learn') {
+                const actions = card.querySelector('.s-actions');
+                const joinBtn = document.createElement('button');
+                joinBtn.className = 's-join';
+                joinBtn.innerHTML = '<i class="far fa-hand-paper"></i> 想参加 <span class="s-join-num">0</span>';
+                actions.appendChild(joinBtn);
+                initJoinBtn(joinBtn, card, key);
+            }
+
+            // switch to target tab & animate
+            document.querySelectorAll('.sem-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sem-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`.sem-tab[data-tab="${tab}"]`).classList.add('active');
+            panel.classList.add('active');
+            gsap.fromTo(card, { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.5)', clearProps: 'opacity,transform' });
+
+            // update stats
+            const statNum = document.querySelector('.sem-stat-num');
+            if (statNum) statNum.textContent = parseInt(statNum.textContent) + 1;
+
+            // close & reset
+            modal.classList.remove('open');
+            document.getElementById('pubTitle').value = '';
+            document.getElementById('pubDesc').value = '';
+            document.getElementById('pubTags').value = '';
+            selectedTime = '';
+            document.getElementById('timeDisplay').textContent = '点击选择时间';
+            document.getElementById('timeDisplay').style.color = 'rgba(200,196,184,0.3)';
+        });
+    }
+
+    function initCardEvents(card, key) {
+        const likeAct = card.querySelector('.s-act[data-type="like"]');
+        const commentAct = card.querySelector('.s-act[data-type="comment"]');
+        if (likeAct) {
+            likeAct.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const d = store[key];
+                const icon = likeAct.querySelector('i');
+                const numEl = likeAct.querySelector('.s-act-num');
+                d.liked = !d.liked;
+                if (d.liked) { d.likes++; likeAct.classList.add('liked'); icon.className = 'fas fa-heart'; numEl.style.color = '#e06050'; }
+                else { d.likes = Math.max(0, d.likes - 1); likeAct.classList.remove('liked'); icon.className = 'fas fa-users'; numEl.style.color = ''; }
+                numEl.textContent = d.liked ? d.likes : d.joinCount;
+            });
+        }
+        if (commentAct) {
+            commentAct.addEventListener('click', (e) => { e.stopPropagation(); toggleComments(card); });
+        }
+    }
+
+    function initJoinBtn(btn, card, key) {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const d = store[key];
+            d.joined = !d.joined;
+            if (d.joined) {
+                d.joinCount++;
+                btn.classList.add('joined');
+                btn.innerHTML = `<i class="fas fa-check"></i> 已参加 <span class="s-join-num">${d.joinCount}</span>`;
+                gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
+            } else {
+                d.joinCount--;
+                btn.classList.remove('joined');
+                btn.innerHTML = `<i class="far fa-hand-paper"></i> 想参加 <span class="s-join-num">${d.joinCount}</span>`;
+            }
+            const likeAct = card.querySelector('.s-act[data-type="like"] .s-act-num');
+            if (likeAct && !store[key].liked) likeAct.textContent = d.joinCount;
+        });
+    }
+
+    // ===== BOOT =====
+    document.addEventListener('DOMContentLoaded', () => {
+        initData();
+        initTabs();
+        addJoinButtons();
+        initLikes();
+        initComments();
+        initJoins();
+        initFollows();
+        initTimePicker();
+        initPublishModal();
+        playAnimations();
+    });
+    </script>
+    <!-- PARTICLE CANVAS -->
+    <canvas id="semParticles"></canvas>
+
+    <script>
+    // ===== PARTICLE SYSTEM =====
+    (function() {
+        const canvas = document.getElementById('semParticles');
+        const ctx = canvas.getContext('2d');
+        let W, H, particles = [], mouse = { x: -1000, y: -1000 };
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        document.addEventListener('mouseleave', () => { mouse.x = -1000; mouse.y = -1000; });
+
+        // Click explosion effect
+        let explosions = [];
+        document.addEventListener('click', e => {
+            // Don't trigger on interactive elements
+            if (e.target.closest('button, a, input, textarea, select, .sem-modal-overlay, .s-card, .sem-tab, .sem-publish-btn')) return;
+            const ex = e.clientX, ey = e.clientY;
+            // Push existing particles away from click point
+            particles.forEach(p => {
+                const dx = p.x - ex, dy = p.y - ey;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 200) {
+                    const force = (200 - dist) / 200 * 8;
+                    p.speedX += (dx / Math.max(dist, 1)) * force;
+                    p.speedY += (dy / Math.max(dist, 1)) * force;
+                }
+            });
+            // Spawn burst particles
+            for (let i = 0; i < 12; i++) {
+                const angle = (Math.PI * 2 / 12) * i + (Math.random() - 0.5) * 0.5;
+                const speed = 3 + Math.random() * 5;
+                explosions.push({
+                    x: ex, y: ey,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: Math.random() * 3 + 1.5,
+                    life: 1,
+                    decay: 0.015 + Math.random() * 0.01,
+                    hue: 38 + Math.random() * 15,
+                });
+            }
+        });
+
+        // card mouse glow tracking
+        document.addEventListener('mousemove', e => {
+            document.querySelectorAll('.s-card').forEach(card => {
+                const r = card.getBoundingClientRect();
+                card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+                card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+            });
+        });
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * W;
+                this.y = Math.random() * H;
+                this.size = Math.random() * 3.5 + 1;
+                this.speedX = (Math.random() - 0.5) * 0.3;
+                this.speedY = (Math.random() - 0.5) * 0.3;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                this.pulse = Math.random() * Math.PI * 2;
+                this.pulseSpeed = Math.random() * 0.02 + 0.005;
+                // color: golden yellow palette
+                this.hue = 38 + Math.random() * 15; // 38-53 golden range
+                this.sat = 85 + Math.random() * 15;
+                this.lightness = 55 + Math.random() * 20;
+                this.trail = [];
+                this.maxTrail = Math.floor(Math.random() * 5) + 3;
+            }
+            update() {
+                this.pulse += this.pulseSpeed;
+                // mouse repulsion
+                const dx = this.x - mouse.x;
+                const dy = this.y - mouse.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 120) {
+                    const force = (120 - dist) / 120 * 0.8;
+                    this.speedX += (dx / dist) * force * 0.1;
+                    this.speedY += (dy / dist) * force * 0.1;
+                }
+                // friction
+                this.speedX *= 0.99;
+                this.speedY *= 0.99;
+                // trail
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > this.maxTrail) this.trail.shift();
+                this.x += this.speedX;
+                this.y += this.speedY;
+                // wrap
+                if (this.x < -10) this.x = W + 10;
+                if (this.x > W + 10) this.x = -10;
+                if (this.y < -10) this.y = H + 10;
+                if (this.y > H + 10) this.y = -10;
+            }
+            draw() {
+                const alpha = this.opacity * (0.6 + 0.4 * Math.sin(this.pulse));
+                const color = `hsla(${this.hue}, ${this.sat}%, ${this.lightness}%, ${alpha})`;
+                const glowColor = `hsla(${this.hue}, ${this.sat}%, ${this.lightness}%, ${alpha * 0.3})`;
+                // trail
+                if (this.trail.length > 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.lineTo(this.x, this.y);
+                    ctx.strokeStyle = `hsla(${this.hue}, ${this.sat}%, ${this.lightness}%, ${alpha * 0.2})`;
+                    ctx.lineWidth = this.size * 0.5;
+                    ctx.stroke();
+                }
+                // glow
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = glowColor;
+                ctx.fill();
+                // core
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+        }
+
+        // create particles
+        const count = Math.min(80, Math.floor(W * H / 15000));
+        for (let i = 0; i < count; i++) particles.push(new Particle());
+
+        // connection lines
+        function drawConnections() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 100) {
+                        const alpha = (1 - dist / 100) * 0.08;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(240, 208, 96, ${alpha})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, W, H);
+            // ambient glow at center
+            const grd = ctx.createRadialGradient(W * 0.5, H * 0.3, 0, W * 0.5, H * 0.3, W * 0.5);
+            grd.addColorStop(0, 'rgba(240, 208, 96, 0.02)');
+            grd.addColorStop(0.5, 'rgba(201, 168, 76, 0.01)');
+            grd.addColorStop(1, 'transparent');
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, W, H);
+
+            drawConnections();
+            particles.forEach(p => { p.update(); p.draw(); });
+
+            // Draw & update explosion particles
+            for (let i = explosions.length - 1; i >= 0; i--) {
+                const ep = explosions[i];
+                ep.x += ep.vx;
+                ep.y += ep.vy;
+                ep.vx *= 0.96;
+                ep.vy *= 0.96;
+                ep.life -= ep.decay;
+                if (ep.life <= 0) { explosions.splice(i, 1); continue; }
+                // Glow
+                ctx.beginPath();
+                ctx.arc(ep.x, ep.y, ep.size * 3, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${ep.hue}, 90%, 65%, ${ep.life * 0.2})`;
+                ctx.fill();
+                // Core
+                ctx.beginPath();
+                ctx.arc(ep.x, ep.y, ep.size * ep.life, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${ep.hue}, 90%, 70%, ${ep.life * 0.8})`;
+                ctx.fill();
+                // White center
+                ctx.beginPath();
+                ctx.arc(ep.x, ep.y, ep.size * 0.3 * ep.life, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 240, ${ep.life * 0.5})`;
+                ctx.fill();
+            }
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    })();
+    </script>
+</body>
+</html>

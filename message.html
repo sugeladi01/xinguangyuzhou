@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>留言板 · 校园正能量</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=LXGW+WenKai&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/tools.css">
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    <nav id="global-nav">
+        <div class="nav-inner">
+            <a class="nav-logo" href="index.html"><i class="fas fa-atom"></i> 正能量</a>
+            <a class="nav-link" href="index.html"><i class="fas fa-home"></i> 首页</a>
+            <a class="nav-link" href="index.html"><i class="fas fa-yin-yang"></i> 心学</a>
+            <a class="nav-link" href="index.html"><i class="fas fa-flask"></i> 科学</a>
+            <a class="nav-link" href="index.html"><i class="fas fa-star"></i> 分享</a>
+            <div class="nav-divider"></div>
+            <a class="nav-link" href="tools.html"><i class="fas fa-tools"></i> 工具</a>
+            <a class="nav-link" href="seminar.html"><i class="fas fa-comments"></i> 研讨</a>
+            <a class="nav-link active" href="message.html"><i class="fas fa-paper-plane"></i> 留言</a>
+        </div>
+    </nav>
+
+    <div class="tool-page-body">
+        <div class="tool-page">
+            <div class="page-header">
+                <h1><i class="fas fa-paper-plane"></i> 留言板</h1>
+                <p>在这里留下你的思考、感悟或祝福，让正能量在校园中传递</p>
+            </div>
+
+            <!-- Post Message Form -->
+            <div class="tool-card" style="max-width:800px;margin:0 auto 2rem;">
+                <h3>留下你的心声</h3>
+                <div class="form-group">
+                    <label>昵称</label>
+                    <input type="text" class="form-input" id="msg-name" placeholder="你的名字...">
+                </div>
+                <div class="form-group">
+                    <label>留言内容</label>
+                    <textarea class="form-textarea" id="msg-content" placeholder="写下你的思考、感悟或祝福..."></textarea>
+                </div>
+                <button class="btn btn-gold" id="msg-submit" style="width:100%;">
+                    <i class="fas fa-paper-plane"></i> 发布留言
+                </button>
+            </div>
+
+            <!-- Message Timeline -->
+            <div style="max-width:800px;margin:0 auto;">
+                <div class="message-timeline">
+                    <div class="message-item">
+                        <div class="msg-author">李明远</div>
+                        <div class="msg-time">2026年4月10日 · 22:30</div>
+                        <div class="msg-content">今天重读《传习录》，突然理解了「事上练」的深意。王阳明不是说要在安静中修行，而是要在日常的每一件事中磨炼心性。知行合一，原来就是「在行动中理解，在理解中行动」的螺旋上升。</div>
+                        <div class="msg-reply"><i class="fas fa-reply"></i> 张思涵：深有同感！这和量子力学中的「测量改变系统」有异曲同工之妙——观察本身就在改变被观察的对象。</div>
+                    </div>
+                    <div class="message-item">
+                        <div class="msg-author">王子轩</div>
+                        <div class="msg-time">2026年4月8日 · 15:20</div>
+                        <div class="msg-content">《思辨与立场》第三章讲到「思维元素」，其中「目的」这一元素让我印象深刻。我们做每件事都有一个隐含的目的，但很少有人清晰地意识到它。当我开始有意识地审视自己的思维目的时，发现很多焦虑其实来源于目的不清晰。</div>
+                    </div>
+                    <div class="message-item">
+                        <div class="msg-author">陈雨桐</div>
+                        <div class="msg-time">2026年4月5日 · 08:00</div>
+                        <div class="msg-content">30天早起冥想挑战 · Day 21 ✅ 今天是第21天，终于感受到了变化。以前早上总是昏昏沉沉，现在醒来后头脑清晰很多。王阳明说「静处体悟」，我现在才真正体会到安静中蕴含的力量。</div>
+                        <div class="msg-reply"><i class="fas fa-reply"></i> 林诗瑶：太棒了！我也在尝试冥想，才坚持到第7天。你的经历给了我继续坚持的动力 💪</div>
+                    </div>
+                    <div class="message-item">
+                        <div class="msg-author">林诗瑶</div>
+                        <div class="msg-time">2026年4月2日 · 19:45</div>
+                        <div class="msg-content">「心外无物，心外无理。」今天在图书馆偶然看到这句话，突然觉得整个世界都安静了。我们总是在向外寻找答案，但也许答案一直在心里。</div>
+                    </div>
+                    <div class="message-item">
+                        <div class="msg-author">刘浩杰</div>
+                        <div class="msg-time">2026年3月28日 · 14:10</div>
+                        <div class="msg-content">从信息论的角度看，「致良知」就像是一个信号降噪的过程——我们的大脑每天接收海量信息，而「良知」就是那个能从噪声中提取真实信号的滤波器。数学和哲学，殊途同归。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/particles.js"></script>
+    <script>
+        // Message submission
+        document.getElementById('msg-submit')?.addEventListener('click', () => {
+            const name = document.getElementById('msg-name').value.trim() || '匿名';
+            const content = document.getElementById('msg-content').value.trim();
+            if (!content) { alert('请输入留言内容'); return; }
+            const timeline = document.querySelector('.message-timeline');
+            const now = new Date();
+            const timeStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 · ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+            const item = document.createElement('div');
+            item.className = 'message-item';
+            item.innerHTML = `
+                <div class="msg-author">${name}</div>
+                <div class="msg-time">${timeStr}</div>
+                <div class="msg-content">${content}</div>
+            `;
+            timeline.insertBefore(item, timeline.firstChild);
+            gsap.from(item, { opacity: 0, y: -20, duration: 0.5 });
+            document.getElementById('msg-name').value = '';
+            document.getElementById('msg-content').value = '';
+        });
+    </script>
+</body>
+</html>
