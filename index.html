@@ -1308,7 +1308,12 @@
         const btn = document.getElementById('nav-auth-btn');
         const user = TokenManager.getUser();
         if (user && btn) {
-            btn.innerHTML = `<i class="fas fa-user-check"></i> ${user.nickname || user.username}`;
+            const avatarUrl = user.avatar && user.avatar !== 'null' && user.avatar !== '' ? user.avatar : null;
+            if (avatarUrl) {
+                btn.innerHTML = `<img src="${avatarUrl}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px;"> ${user.nickname || user.username}`;
+            } else {
+                btn.innerHTML = `<i class="fas fa-user-check"></i> ${user.nickname || user.username}`;
+            }
             btn.onclick = showUserMenu;
         } else if (btn) {
             btn.innerHTML = '<i class="fas fa-user-circle"></i> 登录';
