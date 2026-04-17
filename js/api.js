@@ -95,10 +95,15 @@ const AuthAPI = {
         });
     },
     async emailLogin(email, code, nickname) {
-        return apiRequest('/api/auth/email-login', {
+        const res = await apiRequest('/api/auth/email-login', {
             method: 'POST',
             body: JSON.stringify({ email, code, nickname })
         });
+        if (res.code === 200 && res.data) {
+            TokenManager.setToken(res.data.token);
+            TokenManager.setUser(res.data.user);
+        }
+        return res;
     }
 };
 
