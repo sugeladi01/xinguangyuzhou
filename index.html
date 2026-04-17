@@ -1085,21 +1085,43 @@
                     <button onclick="document.getElementById('login-modal').remove()" style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(201,168,76,0.15);background:transparent;color:#b0aca4;cursor:pointer;font-size:0.75rem;">✕</button>
                 </div>
                 <div id="login-tab-row" style="display:flex;gap:0;margin-bottom:1.2rem;background:rgba(14,14,35,0.6);border-radius:12px;padding:3px;">
-                    <button class="login-tab active" onclick="switchLoginTab('login')" style="flex:1;padding:8px;border-radius:10px;border:none;background:rgba(201,168,76,0.1);color:#e0c868;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">登录</button>
+                    <button class="login-tab active" onclick="switchLoginTab('login')" style="flex:1;padding:8px;border-radius:10px;border:none;background:rgba(201,168,76,0.1);color:#e0c868;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">密码登录</button>
                     <button class="login-tab" onclick="switchLoginTab('register')" style="flex:1;padding:8px;border-radius:10px;border:none;background:transparent;color:#8a8680;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">注册</button>
+                    <button class="login-tab" onclick="switchLoginTab('email')" style="flex:1;padding:8px;border-radius:10px;border:none;background:transparent;color:#8a8680;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">邮箱登录</button>
                 </div>
                 <div id="login-form">
-                    <div style="margin-bottom:0.8rem;">
-                        <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">用户名</label>
-                        <input type="text" id="login-username" placeholder="输入用户名" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+                    <!-- 密码登录/注册表单 -->
+                    <div id="password-form">
+                        <div style="margin-bottom:0.8rem;">
+                            <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">用户名</label>
+                            <input type="text" id="login-username" placeholder="输入用户名" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+                        </div>
+                        <div style="margin-bottom:0.8rem;">
+                            <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">密码</label>
+                            <input type="password" id="login-password" placeholder="输入密码" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+                        </div>
+                        <div id="register-nickname-row" style="margin-bottom:0.8rem;display:none;">
+                            <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">昵称</label>
+                            <input type="text" id="register-nickname" placeholder="你的昵称" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+                        </div>
                     </div>
-                    <div style="margin-bottom:0.8rem;">
-                        <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">密码</label>
-                        <input type="password" id="login-password" placeholder="输入密码" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
-                    </div>
-                    <div id="register-nickname-row" style="margin-bottom:0.8rem;display:none;">
-                        <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">昵称</label>
-                        <input type="text" id="register-nickname" placeholder="你的昵称" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+                    <!-- 邮箱验证码表单 -->
+                    <div id="email-form" style="display:none;">
+                        <div style="margin-bottom:0.8rem;">
+                            <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">邮箱</label>
+                            <input type="email" id="email-input" placeholder="输入邮箱地址" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+                        </div>
+                        <div style="margin-bottom:0.8rem;">
+                            <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">验证码</label>
+                            <div style="display:flex;gap:8px;">
+                                <input type="text" id="email-code" placeholder="6位验证码" maxlength="6" style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+                                <button id="send-code-btn" onclick="handleSendCode()" style="white-space:nowrap;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.2);background:transparent;color:#e0c868;font-family:'LXGW WenKai',sans-serif;font-size:0.78rem;cursor:pointer;">发送验证码</button>
+                            </div>
+                        </div>
+                        <div id="email-nickname-row" style="margin-bottom:0.8rem;display:none;">
+                            <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">昵称（选填）</label>
+                            <input type="text" id="email-nickname" placeholder="设置你的昵称" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+                        </div>
                     </div>
                     <div id="login-error" style="display:none;margin-bottom:0.8rem;padding:6px 10px;border-radius:8px;background:rgba(224,96,80,0.1);border:1px solid rgba(224,96,80,0.2);color:#e06050;font-size:0.78rem;"></div>
                     <button id="login-submit-btn" onclick="handleLogin()" style="width:100%;padding:10px;border-radius:12px;border:none;background:linear-gradient(135deg,#e0c868,#c89030);color:#0a0a10;font-family:'LXGW WenKai',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;">登录</button>
@@ -1113,18 +1135,87 @@
     function switchLoginTab(tab) {
         currentLoginTab = tab;
         const tabs = document.querySelectorAll('#login-modal .login-tab');
-        tabs[0].style.background = tab === 'login' ? 'rgba(201,168,76,0.1)' : 'transparent';
-        tabs[0].style.color = tab === 'login' ? '#e0c868' : '#8a8680';
-        tabs[1].style.background = tab === 'register' ? 'rgba(201,168,76,0.1)' : 'transparent';
-        tabs[1].style.color = tab === 'register' ? '#e0c868' : '#8a8680';
-        document.getElementById('register-nickname-row').style.display = tab === 'register' ? 'block' : 'none';
-        document.getElementById('login-submit-btn').textContent = tab === 'login' ? '登录' : '注册';
+        tabs.forEach((t, i) => {
+            const tabNames = ['login', 'register', 'email'];
+            t.style.background = tab === tabNames[i] ? 'rgba(201,168,76,0.1)' : 'transparent';
+            t.style.color = tab === tabNames[i] ? '#e0c868' : '#8a8680';
+        });
+        const passwordForm = document.getElementById('password-form');
+        const emailForm = document.getElementById('email-form');
+        const nicknameRow = document.getElementById('register-nickname-row');
+        const emailNicknameRow = document.getElementById('email-nickname-row');
+        const submitBtn = document.getElementById('login-submit-btn');
+
+        if (tab === 'email') {
+            passwordForm.style.display = 'none';
+            emailForm.style.display = 'block';
+            nicknameRow.style.display = 'none';
+            emailNicknameRow.style.display = 'block';
+            submitBtn.textContent = '登录 / 注册';
+        } else {
+            passwordForm.style.display = 'block';
+            emailForm.style.display = 'none';
+            emailNicknameRow.style.display = 'none';
+            nicknameRow.style.display = tab === 'register' ? 'block' : 'none';
+            submitBtn.textContent = tab === 'login' ? '登录' : '注册';
+        }
+        document.getElementById('login-error').style.display = 'none';
+    }
+
+    async function handleSendCode() {
+        const email = document.getElementById('email-input').value.trim();
+        const errorEl = document.getElementById('login-error');
+        const btn = document.getElementById('send-code-btn');
+        if (!email) { errorEl.textContent = '请输入邮箱'; errorEl.style.display = 'block'; return; }
+
+        btn.disabled = true;
+        btn.textContent = '发送中...';
+        try {
+            const res = await AuthAPI.sendCode(email);
+            if (res.code === 200) {
+                btn.textContent = '已发送';
+                let countdown = 60;
+                const timer = setInterval(() => {
+                    countdown--;
+                    btn.textContent = `${countdown}s`;
+                    if (countdown <= 0) { clearInterval(timer); btn.disabled = false; btn.textContent = '重新发送'; }
+                }, 1000);
+            } else {
+                errorEl.textContent = res.message || '发送失败';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = '发送验证码';
+            }
+        } catch (err) {
+            errorEl.textContent = '网络错误';
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = '发送验证码';
+        }
     }
 
     async function handleLogin() {
+        const errorEl = document.getElementById('login-error');
+
+        if (currentLoginTab === 'email') {
+            const email = document.getElementById('email-input').value.trim();
+            const code = document.getElementById('email-code').value.trim();
+            const nickname = document.getElementById('email-nickname').value.trim();
+            if (!email || !code) { errorEl.textContent = '请输入邮箱和验证码'; errorEl.style.display = 'block'; return; }
+            if (code.length !== 6) { errorEl.textContent = '验证码为6位数字'; errorEl.style.display = 'block'; return; }
+            const res = await AuthAPI.emailLogin(email, code, nickname || undefined);
+            if (res.code === 200) {
+                document.getElementById('login-modal').remove();
+                updateAuthUI();
+            } else {
+                errorEl.textContent = res.message || '操作失败，请重试';
+                errorEl.style.display = 'block';
+            }
+            return;
+        }
+
         const username = document.getElementById('login-username').value.trim();
         const password = document.getElementById('login-password').value;
-        const errorEl = document.getElementById('login-error');
         if (!username || !password) { errorEl.textContent = '请填写用户名和密码'; errorEl.style.display = 'block'; return; }
 
         let res;

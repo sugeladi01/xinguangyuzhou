@@ -84,9 +84,21 @@ const AuthAPI = {
     async getProfile() {
         return apiRequest('/api/auth/profile');
     },
-    logout() {
+   async logout() {
         TokenManager.removeToken();
         TokenManager.removeUser();
+    },
+    async sendCode(email) {
+        return apiRequest('/api/auth/send-code', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        });
+    },
+    async emailLogin(email, code, nickname) {
+        return apiRequest('/api/auth/email-login', {
+            method: 'POST',
+            body: JSON.stringify({ email, code, nickname })
+        });
     }
 };
 
