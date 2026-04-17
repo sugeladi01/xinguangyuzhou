@@ -122,7 +122,7 @@ const SharesAPI = {
             body: JSON.stringify({ title, category, content, cover })
         });
     },
-    async function like(id) {
+    async like(id) {
         return apiRequest(`/api/shares/${id}/like`, { method: 'POST' });
     },
     async remove(id) {
