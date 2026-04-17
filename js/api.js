@@ -2,7 +2,7 @@
    api.js — 统一 API 配置与请求封装
    ============================================ */
 
-const API_BASE = '/api';
+const API_BASE = '';
 
 // Token 管理
 const TokenManager = {
