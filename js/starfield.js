@@ -242,6 +242,8 @@ function submitPublish() {
 
             // Reload shares from API
             loadSharesFromAPI();
+            // Refresh grid cards
+            if (typeof loadShareGrid === 'function') loadShareGrid();
 
             // Show success feedback
             const btn = document.getElementById('pm-submit-btn');
