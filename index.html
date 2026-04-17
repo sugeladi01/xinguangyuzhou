@@ -986,77 +986,9 @@
             <!-- Grid (Grid Mode) -->
             <div class="grid-container">
                 <div class="content-grid" id="content-grid">
-                    <div class="content-card" data-cat="读书笔记">
-                        <div class="card-cover">📚</div>
-                        <div class="card-info">
-                            <div class="card-category">读书笔记</div>
-                            <div class="card-title">《传习录》中的知行合一</div>
-                            <div class="card-excerpt">王阳明心学核心命题的现代解读与实践指南</div>
-                        </div>
-                        <div class="card-footer">
-                            <span>2026.04.10</span>
-                            <span>READ 128 · LIKE 45</span>
-                        </div>
-                    </div>
-                    <div class="content-card" data-cat="心学感悟">
-                        <div class="card-cover">🧠</div>
-                        <div class="card-info">
-                            <div class="card-category">心学感悟</div>
-                            <div class="card-title">致良知的日常实践</div>
-                            <div class="card-excerpt">如何在繁忙的学业中保持内心的清明与觉知</div>
-                        </div>
-                        <div class="card-footer">
-                            <span>2026.04.08</span>
-                            <span>READ 96 · LIKE 32</span>
-                        </div>
-                    </div>
-                    <div class="content-card" data-cat="代码展示">
-                        <div class="card-cover">💻</div>
-                        <div class="card-info">
-                            <div class="card-category">代码展示</div>
-                            <div class="card-title">习惯养成追踪器</div>
-                            <div class="card-excerpt">用 JavaScript 实现的可视化习惯打卡工具</div>
-                        </div>
-                        <div class="card-footer">
-                            <span>2026.04.05</span>
-                            <span>READ 203 · LIKE 67</span>
-                        </div>
-                    </div>
-                    <div class="content-card" data-cat="项目复盘">
-                        <div class="card-cover">🎯</div>
-                        <div class="card-info">
-                            <div class="card-category">项目复盘</div>
-                            <div class="card-title">21天冥想实验报告</div>
-                            <div class="card-excerpt">从神经科学角度记录冥想带来的认知变化</div>
-                        </div>
-                        <div class="card-footer">
-                            <span>2026.04.01</span>
-                            <span>READ 156 · LIKE 53</span>
-                        </div>
-                    </div>
-                    <div class="content-card" data-cat="读书笔记">
-                        <div class="card-cover">📖</div>
-                        <div class="card-info">
-                            <div class="card-category">读书笔记</div>
-                            <div class="card-title">《思辨与立场》精读</div>
-                            <div class="card-excerpt">批判性思维的七个标准及其在大学学习中的应用</div>
-                        </div>
-                        <div class="card-footer">
-                            <span>2026.03.28</span>
-                            <span>READ 89 · LIKE 28</span>
-                        </div>
-                    </div>
-                    <div class="content-card" data-cat="科学探索">
-                        <div class="card-cover">🔬</div>
-                        <div class="card-info">
-                            <div class="card-category">科学探索</div>
-                            <div class="card-title">熵增定律与人生规划</div>
-                            <div class="card-excerpt">如何在无序的宇宙中创造属于自己的有序系统</div>
-                        </div>
-                        <div class="card-footer">
-                            <span>2026.03.25</span>
-                            <span>READ 178 · LIKE 61</span>
-                        </div>
+                    <div style="text-align:center;padding:2rem;color:#8a8680;grid-column:1/-1;">
+                        <i class="fas fa-spinner fa-spin" style="font-size:1.2rem;"></i>
+                        <p style="margin-top:0.5rem;">加载分享中...</p>
                     </div>
                 </div>
             </div>
@@ -1304,6 +1236,47 @@
         updateAuthUI();
     }
 
+    // ===== 加载分享网格卡片 =====
+    const shareCatIcons = { '读书笔记': '📚', '心学感悟': '🧠', '科学探索': '🔬', '项目复盘': '🎯', '代码展示': '💻', '其他': '✨' };
+
+    async function loadShareGrid(category) {
+        const grid = document.getElementById('content-grid');
+        if (!grid) return;
+        grid.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;grid-column:1/-1;"><i class="fas fa-spinner fa-spin" style="font-size:1.2rem;"></i><p style="margin-top:0.5rem;">加载中...</p></div>';
+        try {
+            const res = await SharesAPI.getList(1, 20, category);
+            if (res.code === 200 && res.data && res.data.list) {
+                const list = res.data.list;
+                if (list.length === 0) {
+                    grid.innerHTML = '<div style="text-align:center;padding:3rem;color:#8a8680;grid-column:1/-1;">暂无分享内容</div>';
+                    return;
+                }
+                grid.innerHTML = list.map(s => {
+                    const cat = s.category || '其他';
+                    const icon = shareCatIcons[cat] || '✨';
+                    const d = new Date(s.created_at);
+                    const dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+                    return `<div class="content-card" data-cat="${cat}">
+                        <div class="card-cover">${icon}</div>
+                        <div class="card-info">
+                            <div class="card-category">${cat}</div>
+                            <div class="card-title">${s.title}</div>
+                            <div class="card-excerpt">${s.content ? s.content.substring(0, 50) + '...' : ''}</div>
+                        </div>
+                        <div class="card-footer">
+                            <span>${dateStr}</span>
+                            <span>READ ${s.read_count || 0} · LIKE ${s.like_count || 0}</span>
+                        </div>
+                    </div>`;
+                }).join('');
+            } else {
+                grid.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;grid-column:1/-1;">加载失败</div>';
+            }
+        } catch (err) {
+            grid.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;grid-column:1/-1;">网络错误</div>';
+        }
+    }
+
     function updateAuthUI() {
         const btn = document.getElementById('nav-auth-btn');
         const user = TokenManager.getUser();
@@ -1322,7 +1295,10 @@
     }
 
     // 页面加载时更新登录状态
-    document.addEventListener('DOMContentLoaded', updateAuthUI);
+    document.addEventListener('DOMContentLoaded', () => {
+        updateAuthUI();
+        loadShareGrid();
+    });
 
     // 监听来自 iframe 的登录状态同步
     window.addEventListener('storage', (e) => {

@@ -197,6 +197,10 @@ function filterCards(category) {
             card.style.display = 'none';
         }
     });
+    // 同时刷新网格数据
+    if (typeof loadShareGrid === 'function') {
+        loadShareGrid(category === 'all' ? undefined : category);
+    }
 }
 
 // Publish modal
