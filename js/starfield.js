@@ -14,6 +14,35 @@ const starData = [
     { id: 9, title: '心理韧性', x: 72, y: 42, content: '面对挫折时的恢复能力。心理学研究表明，心理韧性不是天生的特质，而是可以通过练习培养的技能。正念冥想、积极重构、社会支持都是增强韧性的有效方法。', category: '科学探索' },
 ];
 
+// API: Load shares from backend
+async function loadSharesFromAPI() {
+    try {
+        const res = await SharesAPI.getList(1, 50);
+        if (res.code === 200 && res.data && res.data.list) {
+            const apiShares = res.data.list;
+            // Merge API data into starData (keep existing hardcoded as fallback)
+            apiShares.forEach((share, i) => {
+                const existing = starData.find(s => s.id === share.id);
+                if (!existing) {
+                    starData.push({
+                        id: share.id,
+                        title: share.title,
+                        x: 20 + Math.random() * 60,
+                        y: 20 + Math.random() * 60,
+                        content: share.content,
+                        category: share.category || '分享'
+                    });
+                }
+            });
+            // Re-render if starfield exists
+            const container = document.querySelector('.starfield-container');
+            if (container) initStarfield();
+        }
+    } catch (err) {
+        console.log('Using fallback star data');
+    }
+}
+
 let currentMode = 'explore'; // 'explore' or 'grid'
 let currentFilter = 'all';
 
@@ -190,78 +219,51 @@ function submitPublish() {
     const content = document.getElementById('pm-content').value.trim();
 
     if (!title || !content) {
-        // Shake the modal
         gsap.to('.publish-modal', { x: [-8, 8, -6, 6, -3, 3, 0], duration: 0.5 });
         return;
     }
 
-    // Create new card
-    const grid = document.getElementById('content-grid');
-    if (!grid) return;
-
-    const catEmojis = { '读书笔记': '📚', '心学感悟': '🧠', '科学探索': '🔬', '项目复盘': '🎯', '代码展示': '💻' };
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
-
-    const newCard = document.createElement('div');
-    newCard.className = 'content-card';
-    newCard.dataset.cat = category;
-    newCard.innerHTML = `
-        <div class="card-cover">${catEmojis[category] || '📝'}</div>
-        <div class="card-info">
-            <div class="card-category">${category}</div>
-            <div class="card-title">${title}</div>
-            <div class="card-excerpt">${content.substring(0, 60)}${content.length > 60 ? '...' : ''}</div>
-        </div>
-        <div class="card-footer">
-            <span>${dateStr}</span>
-            <span>READ 0 · LIKE 0</span>
-        </div>
-    `;
-
-    grid.insertBefore(newCard, grid.firstChild);
-    gsap.fromTo(newCard, { opacity: 0, y: -20, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: 'back.out(1.5)' });
-
-    // Update stats
-    const statNums = document.querySelectorAll('.sharing-stat-num');
-    if (statNums[0]) statNums[0].textContent = parseInt(statNums[0].textContent) + 1;
-
-    // Add new star to starfield
-    const newId = starData.length + 1;
-    const newX = 25 + Math.random() * 50; // Random position in center area
-    const newY = 25 + Math.random() * 45;
-    starData.push({
-        id: newId,
-        title: title.length > 8 ? title.substring(0, 8) + '...' : title,
-        x: newX,
-        y: newY,
-        content: content,
-        category: category
-    });
-    // Re-render starfield
-    initStarfield();
-
-    // Clear form and close
-    document.getElementById('pm-title').value = '';
-    document.getElementById('pm-content').value = '';
-    closePublishModal();
-
-    // Show success feedback
-    const btn = document.getElementById('pm-submit-btn');
-    if (btn) {
-        const original = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i>&nbsp; 已发布';
-        btn.style.background = 'linear-gradient(135deg, #60c060, #40a040)';
-        setTimeout(() => {
-            btn.innerHTML = original;
-            btn.style.background = '';
-        }, 1500);
+    if (!TokenManager.isLoggedIn()) {
+        alert('请先登录后再发布分享');
+        return;
     }
+
+    // Call API
+    SharesAPI.create(title, category, content).then(res => {
+        if (res.code === 201) {
+            // Clear form and close
+            document.getElementById('pm-title').value = '';
+            document.getElementById('pm-content').value = '';
+            closePublishModal();
+
+            // Reload shares from API
+            loadSharesFromAPI();
+
+            // Show success feedback
+            const btn = document.getElementById('pm-submit-btn');
+            if (btn) {
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i>&nbsp; 已发布';
+                btn.style.background = 'linear-gradient(135deg, #60c060, #40a040)';
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                    btn.style.background = '';
+                }, 1500);
+            }
+        } else {
+            alert(res.message || '发布失败');
+        }
+    });
 }
 
 // Init on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
     initStarfield();
+
+    // Load shares from backend API
+    if (typeof SharesAPI !== 'undefined') {
+        loadSharesFromAPI();
+    }
 
     // Mode toggle buttons
     document.querySelectorAll('.mode-btn').forEach(btn => {

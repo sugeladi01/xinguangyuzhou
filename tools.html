@@ -1050,6 +1050,7 @@
         </div>
     </div>
 
+    <script src="js/api.js"></script>
     <script src="js/particles.js"></script>
     <script>
     // ===== Tab switching - open overlay (like science exhibit) =====
@@ -1233,10 +1234,10 @@
             if (goalInput) {
                 const text = goalInput.value.trim();
                 if (!text) return;
+                if (!TokenManager.isLoggedIn()) { alert('请先登录后再添加目标'); return; }
                 const cat = currentCat === 'all' ? 'study' : currentCat;
-                goals.push({ text, done: false, cat, priority: priorities[Math.floor(Math.random() * 3)] });
+                addGoal(text, cat);
                 goalInput.value = '';
-                renderGoals();
             }
             return;
         }
@@ -1247,7 +1248,7 @@
             document.querySelectorAll('.goal-cat-btn').forEach(b => b.classList.remove('active'));
             goalCatBtn.classList.add('active');
             currentCat = goalCatBtn.dataset.cat;
-            renderGoals();
+            loadGoals();
             return;
         }
 
@@ -1272,10 +1273,10 @@
         if (e.key === 'Enter' && e.target.id === 'goal-input') {
             const text = e.target.value.trim();
             if (!text) return;
+            if (!TokenManager.isLoggedIn()) { alert('请先登录后再添加目标'); return; }
             const cat = currentCat === 'all' ? 'study' : currentCat;
-            goals.push({ text, done: false, cat, priority: priorities[Math.floor(Math.random() * 3)] });
+            addGoal(text, cat);
             e.target.value = '';
-            renderGoals();
         }
     });
 
@@ -1325,58 +1326,106 @@
 
     updatePomDisplay();
 
-    // ===== GOALS =====
+    // ===== GOALS (API) =====
     let goals = [];
     let currentCat = 'all';
 
     const catMap = { 'study': '📚 学习', 'life': '🌿 生活', 'growth': '🌱 成长', 'social': '🤝 社交' };
     const priorities = ['high', 'medium', 'low'];
 
-    function getFilteredGoals() {
-        if (currentCat === 'all') return goals;
-        return goals.filter(g => g.cat === currentCat);
+    async function loadGoals() {
+        if (!TokenManager.isLoggedIn()) {
+            renderGoalsUI([]);
+            return;
+        }
+        try {
+            const cat = currentCat === 'all' ? undefined : currentCat;
+            const res = await GoalsAPI.getList(cat);
+            if (res.code === 200 && res.data) {
+                goals = res.data.list || [];
+                renderGoalsUI(goals);
+            }
+        } catch (err) {
+            console.error('Failed to load goals:', err);
+        }
     }
 
-    function renderGoals() {
+    function renderGoalsUI(goalData) {
         const goalList = document.getElementById('goal-list');
         const goalsFill = document.getElementById('goals-fill');
         const goalsNum = document.getElementById('goals-num');
         if (!goalList || !goalsFill || !goalsNum) return;
-        const filtered = getFilteredGoals();
-        const done = filtered.filter(g => g.done).length;
-        const total = filtered.length;
+
+        if (!TokenManager.isLoggedIn()) {
+            goalList.innerHTML = '<div class="goals-empty"><div class="empty-icon">🎯</div>请先登录后使用目标规划</div>';
+            goalsNum.textContent = '0/0';
+            goalsFill.style.width = '0%';
+            return;
+        }
+
+        const done = goalData.filter(g => g.done === 1 || g.done === true).length;
+        const total = goalData.length;
         goalsNum.textContent = `${done}/${total}`;
         goalsFill.style.width = total > 0 ? (done / total * 100) + '%' : '0%';
         if (total === 0) {
             goalList.innerHTML = `<div class="goals-empty"><div class="empty-icon">🎯</div>${currentCat === 'all' ? '还没有目标，开始添加吧' : '该分类下还没有目标'}</div>`;
             return;
         }
-        goalList.innerHTML = filtered.map((g, i) => `
-            <div class="goal-item" style="animation: panelSlideIn 0.3s ease ${i * 0.04}s both;">
-                <div class="goal-item-priority ${g.priority}"></div>
-                <div class="goal-check ${g.done ? 'checked' : ''}" onclick="toggleGoal(${goals.indexOf(g)})">${g.done ? '✓' : ''}</div>
-                <span class="goal-text ${g.done ? 'done' : ''}">${g.text}</span>
-                <span class="goal-tag">${catMap[g.cat] || g.cat}</span>
-                <span class="goal-delete" onclick="deleteGoal(${goals.indexOf(g)})">✕</span>
-            </div>
-        `).join('');
+        goalList.innerHTML = goalData.map((g, i) => {
+            const isDone = g.done === 1 || g.done === true;
+            const priorityMap = { 1: 'high', 2: 'medium', 3: 'low' };
+            const pClass = priorityMap[g.priority] || 'medium';
+            return `
+            <div class="goal-item" data-id="${g.id}" style="animation: panelSlideIn 0.3s ease ${i * 0.04}s both;">
+                <div class="goal-item-priority ${pClass}"></div>
+                <div class="goal-check ${isDone ? 'checked' : ''}" onclick="toggleGoalAPI(${g.id}, this)">${isDone ? '✓' : ''}</div>
+                <span class="goal-text ${isDone ? 'done' : ''}">${escapeHtmlGoal(g.text)}</span>
+                <span class="goal-tag">${catMap[g.category] || g.category || ''}</span>
+                <span class="goal-delete" onclick="deleteGoalAPI(${g.id}, this)">✕</span>
+            </div>`;
+        }).join('');
     }
 
-    function toggleGoal(i) {
-        goals[i].done = !goals[i].done;
-        if (goals[i].done) {
-            gsap.fromTo(event.target, { scale: 0.5 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
-        }
-        renderGoals();
+    function escapeHtmlGoal(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
-    function deleteGoal(i) {
-        const item = event.target.closest('.goal-item');
+
+    async function addGoal(text, category) {
+        const priority = priorities[Math.floor(Math.random() * 3)];
+        const priorityNum = { 'high': 1, 'medium': 2, 'low': 3 }[priority] || 2;
+        const res = await GoalsAPI.create(text, category, priorityNum);
+        if (res.code === 201) {
+            loadGoals();
+        } else {
+            alert(res.message || '添加目标失败');
+        }
+    }
+
+    async function toggleGoalAPI(id, el) {
+        const goal = goals.find(g => g.id === id);
+        if (!goal) return;
+        const newDone = (goal.done === 1 || goal.done === true) ? 0 : 1;
+        const res = await GoalsAPI.update(id, { done: newDone });
+        if (res.code === 200) {
+            if (newDone) {
+                gsap.fromTo(el, { scale: 0.5 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
+            }
+            loadGoals();
+        }
+    }
+
+    async function deleteGoalAPI(id, el) {
+        const item = el.closest('.goal-item');
         if (item) {
-            gsap.to(item, { opacity: 0, x: -20, height: 0, padding: 0, marginBottom: 0, duration: 0.3, onComplete: () => {
-                goals.splice(i, 1); renderGoals();
+            gsap.to(item, { opacity: 0, x: -20, height: 0, padding: 0, marginBottom: 0, duration: 0.3, onComplete: async () => {
+                await GoalsAPI.remove(id);
+                loadGoals();
             }});
         } else {
-            goals.splice(i, 1); renderGoals();
+            await GoalsAPI.remove(id);
+            loadGoals();
         }
     }
 
