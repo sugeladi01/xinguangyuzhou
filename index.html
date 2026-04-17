@@ -1214,23 +1214,67 @@
         }
     }
 
-    function showUserMenu(user) {
+    function showUserMenu() {
+        const user = TokenManager.getUser();
+        if (!user) { showLoginModal(); return; }
+
         const existing = document.getElementById('user-menu-modal');
         if (existing) existing.remove();
+
+        const avatarUrl = user.avatar && user.avatar !== 'null' && user.avatar !== '' ? user.avatar : null;
+        const avatarInitial = (user.nickname || user.username || '?').charAt(0);
+        const avatarHtml = avatarUrl
+            ? `<img src="${avatarUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin:0 auto 1rem;display:block;">`
+            : `<div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#e0c868,#c89030);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:#0a0a10;">${avatarInitial}</div>`;
 
         const modal = document.createElement('div');
         modal.id = 'user-menu-modal';
         modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;justify-content:center;align-items:center;backdrop-filter:blur(4px);';
         modal.innerHTML = `
             <div style="width:90%;max-width:320px;background:#14142c;border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.5);text-align:center;">
-                <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#e0c868,#c89030);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:#0a0a10;">${(user.nickname || user.username || '?').charAt(0)}</div>
-                <div style="color:#e8e4dc;font-size:1rem;margin-bottom:0.3rem;">${user.nickname || user.username}</div>
-                <div style="color:#8a8680;font-size:0.78rem;margin-bottom:1.5rem;">@${user.username}</div>
+                ${avatarHtml}
+                <div style="color:#e8e4dc;font-size:1rem;margin-bottom:0.3rem;">${user.nickname || user.username || '未知用户'}</div>
+                <div style="color:#8a8680;font-size:0.78rem;margin-bottom:1.5rem;">@${user.username || ''}</div>
+                <label style="display:block;width:100%;padding:10px;border-radius:12px;border:1px solid rgba(201,168,76,0.15);background:rgba(10,10,25,0.4);color:#b0aca4;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;margin-bottom:0.5rem;text-align:center;">
+                    <i class="fas fa-camera" style="margin-right:6px;"></i> 更换头像
+                    <input type="file" accept="image/*" id="avatar-upload" style="display:none;" onchange="handleAvatarUpload(this)">
+                </label>
                 <button onclick="handleLogout()" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(201,168,76,0.2);background:transparent;color:#e06050;font-family:'LXGW WenKai',sans-serif;font-size:0.85rem;cursor:pointer;">退出登录</button>
                 <button onclick="document.getElementById('user-menu-modal').remove()" style="width:100%;padding:10px;border-radius:12px;border:none;background:transparent;color:#8a8680;font-family:'LXGW WenKai',sans-serif;font-size:0.85rem;cursor:pointer;margin-top:0.5rem;">关闭</button>
             </div>`;
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
         document.body.appendChild(modal);
+    }
+
+    async function handleAvatarUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { alert('头像图片不能超过2MB'); return; }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const base64 = e.target.result;
+            try {
+                const res = await apiRequest('/api/auth/profile', {
+                    method: 'PUT',
+                    body: JSON.stringify({ avatar: base64 })
+                });
+                if (res.code === 200) {
+                    const user = TokenManager.getUser();
+                    user.avatar = base64;
+                    TokenManager.setUser(user);
+                    // 刷新用户菜单
+                    document.getElementById('user-menu-modal')?.remove();
+                    showUserMenu();
+                    updateAuthUI();
+                } else {
+                    alert(res.message || '头像上传失败');
+                }
+            } catch (err) {
+                alert('上传失败，请重试');
+            }
+        };
+        reader.readAsDataURL(file);
     }
 
     function handleLogout() {
