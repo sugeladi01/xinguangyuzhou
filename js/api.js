@@ -2,7 +2,7 @@
    api.js — 统一 API 配置与请求封装
    ============================================ */
 
-const API_BASE = 'http://8.218.227.160:3000';
+const API_BASE = '/api';
 
 // Token 管理
 const TokenManager = {
