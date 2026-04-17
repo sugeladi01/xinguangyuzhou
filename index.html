@@ -1253,6 +1253,15 @@
 
     // 页面加载时更新登录状态
     document.addEventListener('DOMContentLoaded', updateAuthUI);
+
+    // 监听来自 iframe 的登录状态同步
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'xinguang_token' || e.key === 'xinguang_user') {
+            updateAuthUI();
+        }
+    });
+    // 轮询检查登录状态（兼容 iframe 内登录后同步）
+    setInterval(updateAuthUI, 2000);
     </script>
 
 </body>
