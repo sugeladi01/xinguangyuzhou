@@ -263,7 +263,7 @@ router.post('/send-code', async (req, res) => {
 // -------------------------------------------
 router.post('/email-login', async (req, res) => {
     try {
-        const { email, code, nickname } = req.body;
+        const { email, code, nickname, password } = req.body;
         if (!email || !code) {
             return res.status(400).json({ code: 400, message: '请输入邮箱和验证码' });
         }
@@ -283,9 +283,13 @@ router.post('/email-login', async (req, res) => {
         } else {
             // 新用户，自动注册
             const defaultNickname = nickname || email.split('@')[0];
+            let hashedPassword = '';
+            if (password && password.length >= 6) {
+                hashedPassword = await bcrypt.hash(password, 10);
+            }
             const [result] = await db.query(
                 'INSERT INTO users (username, password, nickname) VALUES (?, ?, ?)',
-                [email, '', defaultNickname]
+                [email, hashedPassword, defaultNickname]
             );
             const [newUser] = await db.query(
                 'SELECT id, username, nickname, avatar, created_at FROM users WHERE id = ?',

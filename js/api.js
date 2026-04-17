@@ -94,10 +94,10 @@ const AuthAPI = {
             body: JSON.stringify({ email })
         });
     },
-    async emailLogin(email, code, nickname) {
+    async emailLogin(email, code, nickname, password) {
         const res = await apiRequest('/api/auth/email-login', {
             method: 'POST',
-            body: JSON.stringify({ email, code, nickname })
+            body: JSON.stringify({ email, code, nickname, password })
         });
         if (res.code === 200 && res.data) {
             TokenManager.setToken(res.data.token);

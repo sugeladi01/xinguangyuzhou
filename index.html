@@ -1122,6 +1122,10 @@
                             <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">昵称（选填）</label>
                             <input type="text" id="email-nickname" placeholder="设置你的昵称" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
                         </div>
+                        <div id="email-password-row" style="margin-bottom:0.8rem;display:none;">
+                            <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">设置密码（选填，设置后可用密码登录）</label>
+                            <input type="password" id="email-password" placeholder="至少6位密码" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+                        </div>
                     </div>
                     <div id="login-error" style="display:none;margin-bottom:0.8rem;padding:6px 10px;border-radius:8px;background:rgba(224,96,80,0.1);border:1px solid rgba(224,96,80,0.2);color:#e06050;font-size:0.78rem;"></div>
                     <button id="login-submit-btn" onclick="handleLogin()" style="width:100%;padding:10px;border-radius:12px;border:none;background:linear-gradient(135deg,#e0c868,#c89030);color:#0a0a10;font-family:'LXGW WenKai',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;">登录</button>
@@ -1151,11 +1155,13 @@
             emailForm.style.display = 'block';
             nicknameRow.style.display = 'none';
             emailNicknameRow.style.display = 'block';
+            document.getElementById('email-password-row').style.display = 'block';
             submitBtn.textContent = '登录 / 注册';
         } else {
             passwordForm.style.display = 'block';
             emailForm.style.display = 'none';
             emailNicknameRow.style.display = 'none';
+            document.getElementById('email-password-row').style.display = 'none';
             nicknameRow.style.display = tab === 'register' ? 'block' : 'none';
             submitBtn.textContent = tab === 'login' ? '登录' : '注册';
         }
@@ -1201,9 +1207,11 @@
             const email = document.getElementById('email-input').value.trim();
             const code = document.getElementById('email-code').value.trim();
             const nickname = document.getElementById('email-nickname').value.trim();
+            const password = document.getElementById('email-password').value;
             if (!email || !code) { errorEl.textContent = '请输入邮箱和验证码'; errorEl.style.display = 'block'; return; }
             if (code.length !== 6) { errorEl.textContent = '验证码为6位数字'; errorEl.style.display = 'block'; return; }
-            const res = await AuthAPI.emailLogin(email, code, nickname || undefined);
+            if (password && password.length < 6) { errorEl.textContent = '密码至少6位'; errorEl.style.display = 'block'; return; }
+            const res = await AuthAPI.emailLogin(email, code, nickname || undefined, password || undefined);
             if (res.code === 200) {
                 document.getElementById('login-modal').remove();
                 updateAuthUI();
