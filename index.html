@@ -1239,6 +1239,30 @@
     // ===== 加载分享网格卡片 =====
     const shareCatIcons = { '读书笔记': '📚', '心学感悟': '🧠', '科学探索': '🔬', '项目复盘': '🎯', '代码展示': '💻', '其他': '✨' };
 
+    // 打开分享详情
+    async function openShareDetail(id) {
+        try {
+            const res = await SharesAPI.getDetail(id);
+            if (res.code === 200 && res.data) {
+                const s = res.data;
+                openDeepView({ title: s.title, category: s.category, content: s.content });
+            }
+        } catch (err) {
+            console.error('Failed to load share detail:', err);
+        }
+    }
+
+    // 删除分享
+    async function deleteShare(id) {
+        if (!confirm('确定要删除这篇分享吗？')) return;
+        const res = await SharesAPI.remove(id);
+        if (res.code === 200) {
+            loadShareGrid();
+        } else {
+            alert(res.message || '删除失败');
+        }
+    }
+
     async function loadShareGrid(category) {
         const grid = document.getElementById('content-grid');
         if (!grid) return;
@@ -1256,7 +1280,10 @@
                     const icon = shareCatIcons[cat] || '✨';
                     const d = new Date(s.created_at);
                     const dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
-                    return `<div class="content-card" data-cat="${cat}">
+                    const user = TokenManager.getUser();
+                    const isOwner = user && s.user_id === user.id;
+                    const deleteBtn = isOwner ? `<span class="share-delete-btn" onclick="event.stopPropagation();deleteShare(${s.id})" style="cursor:pointer;color:#e06050;font-size:0.75rem;margin-left:8px;" title="删除">✕</span>` : '';
+                    return `<div class="content-card" data-cat="${cat}" data-share-id="${s.id}" onclick="openShareDetail(${s.id})">
                         <div class="card-cover">${icon}</div>
                         <div class="card-info">
                             <div class="card-category">${cat}</div>
@@ -1265,7 +1292,7 @@
                         </div>
                         <div class="card-footer">
                             <span>${dateStr}</span>
-                            <span>READ ${s.read_count || 0} · LIKE ${s.like_count || 0}</span>
+                            <span>READ ${s.read_count || 0} · LIKE ${s.like_count || 0}${deleteBtn}</span>
                         </div>
                     </div>`;
                 }).join('');
