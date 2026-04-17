@@ -205,6 +205,10 @@ function filterCards(category) {
 
 // Publish modal
 function openPublishModal() {
+    if (!TokenManager.getToken()) {
+        showLoginModal();
+        return;
+    }
     const modal = document.getElementById('publish-modal');
     if (modal) {
         modal.classList.add('active');
