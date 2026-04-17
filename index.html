@@ -1249,32 +1249,53 @@
     async function handleAvatarUpload(input) {
         const file = input.files[0];
         if (!file) return;
-        if (file.size > 2 * 1024 * 1024) { alert('头像图片不能超过2MB'); return; }
+        if (file.size > 5 * 1024 * 1024) { alert('头像图片不能超过5MB'); return; }
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const base64 = e.target.result;
-            try {
-                const res = await apiRequest('/api/auth/profile', {
-                    method: 'PUT',
-                    body: JSON.stringify({ avatar: base64 })
-                });
-                if (res.code === 200) {
-                    const user = TokenManager.getUser();
-                    user.avatar = base64;
-                    TokenManager.setUser(user);
-                    // 刷新用户菜单
-                    document.getElementById('user-menu-modal')?.remove();
-                    showUserMenu();
-                    updateAuthUI();
-                } else {
-                    alert(res.message || '头像上传失败');
-                }
-            } catch (err) {
-                alert('上传失败，请重试');
+        // 压缩图片到 100x100 以内，减少 base64 大小
+        const base64 = await compressImage(file, 100, 100);
+        if (!base64) { alert('图片处理失败'); return; }
+
+        try {
+            const res = await apiRequest('/api/auth/profile', {
+                method: 'PUT',
+                body: JSON.stringify({ avatar: base64 })
+            });
+            if (res.code === 200) {
+                const user = TokenManager.getUser();
+                user.avatar = base64;
+                TokenManager.setUser(user);
+                document.getElementById('user-menu-modal')?.remove();
+                showUserMenu();
+                updateAuthUI();
+            } else {
+                alert(res.message || '头像上传失败');
             }
-        };
-        reader.readAsDataURL(file);
+        } catch (err) {
+            alert('上传失败，请重试');
+        }
+    }
+
+    function compressImage(file, maxW, maxH) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w > maxW) { h = h * maxW / w; w = maxW; }
+                    if (h > maxH) { w = w * maxH / h; h = maxH; }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.onerror = () => resolve(null);
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
     }
 
     function handleLogout() {
