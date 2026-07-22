@@ -319,7 +319,11 @@ router.post('/email-login', async (req, res) => {
                 return res.status(403).json({ code: 403, message: '您的账号已被管理员拉黑，请联系管理员解封' });
             }
         } else {
-            // 新用户，自动注册
+            // 新用户，自动注册 — 先检查是否允许注册
+            const [settings] = await db.query("SELECT value FROM settings WHERE `key` = 'register_enabled'");
+            if (settings.length > 0 && settings[0].value === '0') {
+                return res.status(403).json({ code: 403, message: '管理员已关闭注册功能' });
+            }
             const defaultNickname = nickname || email.split('@')[0];
             let hashedPassword = '';
             if (password && password.length >= 6) {
