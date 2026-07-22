@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const authMiddleware = require('../middleware/auth');
+const { adminMiddleware } = require('../middleware/auth');
 const { sendCode, verifyCode } = require('../utils/email');
 
 const router = express.Router();
@@ -104,7 +105,7 @@ router.post('/login', async (req, res) => {
 
     // 查找用户
     const [users] = await db.query(
-      'SELECT id, username, password, nickname, avatar, created_at FROM users WHERE username = ?',
+      'SELECT id, username, password, nickname, avatar, is_admin, is_blocked, created_at FROM users WHERE username = ?',
       [username]
     );
 
@@ -126,9 +127,17 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // 生成 JWT
+    // 检查是否被拉黑
+    if (user.is_blocked) {
+      return res.status(403).json({
+        code: 403,
+        message: '您的账号已被管理员拉黑，请联系管理员解封'
+      });
+    }
+
+    // 生成 JWT（包含 is_admin）
     const token = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, username: user.username, is_admin: user.is_admin },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
@@ -143,6 +152,7 @@ router.post('/login', async (req, res) => {
           username: user.username,
           nickname: user.nickname,
           avatar: user.avatar,
+          is_admin: user.is_admin,
           created_at: user.created_at
         }
       }
@@ -162,7 +172,7 @@ router.post('/login', async (req, res) => {
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
     const [users] = await db.query(
-      'SELECT id, username, nickname, avatar, created_at FROM users WHERE id = ?',
+      'SELECT id, username, nickname, avatar, is_admin, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
 
@@ -274,12 +284,16 @@ router.post('/email-login', async (req, res) => {
         }
 
         // 查找用户（用邮箱作为username）
-        const [users] = await db.query('SELECT id, username, nickname, avatar, created_at FROM users WHERE username = ?', [email]);
+        const [users] = await db.query('SELECT id, username, nickname, avatar, is_admin, is_blocked, created_at FROM users WHERE username = ?', [email]);
         let user, isNew = false;
 
         if (users.length > 0) {
             // 已有用户，直接登录
             user = users[0];
+            // 检查是否被拉黑
+            if (user.is_blocked) {
+                return res.status(403).json({ code: 403, message: '您的账号已被管理员拉黑，请联系管理员解封' });
+            }
         } else {
             // 新用户，自动注册
             const defaultNickname = nickname || email.split('@')[0];
@@ -299,9 +313,9 @@ router.post('/email-login', async (req, res) => {
             isNew = true;
         }
 
-        // 生成 JWT
+        // 生成 JWT（包含 is_admin）
         const token = jwt.sign(
-            { id: user.id, username: user.username },
+            { id: user.id, username: user.username, is_admin: user.is_admin || 0 },
             process.env.JWT_SECRET || 'xinguang-jwt-secret-2026',
             { expiresIn: '7d' }
         );
@@ -315,6 +329,90 @@ router.post('/email-login', async (req, res) => {
         console.error('[邮箱登录错误]', err);
         res.status(500).json({ code: 500, message: '服务器内部错误' });
     }
+});
+
+// -------------------------------------------
+// GET /api/auth/users - 管理员获取用户列表（需管理员权限）
+// -------------------------------------------
+router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const [users] = await db.query(
+      'SELECT id, username, nickname, avatar, is_admin, is_blocked, created_at FROM users ORDER BY created_at DESC'
+    );
+
+    res.json({
+      code: 200,
+      message: 'success',
+      data: users
+    });
+  } catch (err) {
+    console.error('[获取用户列表错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// -------------------------------------------
+// PUT /api/auth/users/:id/block - 管理员拉黑用户（需管理员权限）
+// -------------------------------------------
+router.put('/users/:id/block', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ code: 400, message: '无效的用户ID' });
+    }
+
+    // 不能拉黑自己
+    if (userId === req.user.id) {
+      return res.status(400).json({ code: 400, message: '不能拉黑自己' });
+    }
+
+    // 检查目标用户是否存在
+    const [users] = await db.query('SELECT id, is_admin FROM users WHERE id = ?', [userId]);
+    if (users.length === 0) {
+      return res.status(404).json({ code: 404, message: '用户不存在' });
+    }
+
+    // 不能拉黑其他管理员
+    if (users[0].is_admin) {
+      return res.status(400).json({ code: 400, message: '不能拉黑管理员' });
+    }
+
+    // 执行拉黑
+    await db.query('UPDATE users SET is_blocked = 1 WHERE id = ?', [userId]);
+
+    res.json({ code: 200, message: '用户已被拉黑' });
+  } catch (err) {
+    console.error('[拉黑用户错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// -------------------------------------------
+// PUT /api/auth/users/:id/unblock - 管理员解封用户（需管理员权限）
+// -------------------------------------------
+router.put('/users/:id/unblock', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ code: 400, message: '无效的用户ID' });
+    }
+
+    // 检查用户是否存在
+    const [users] = await db.query('SELECT id FROM users WHERE id = ?', [userId]);
+    if (users.length === 0) {
+      return res.status(404).json({ code: 404, message: '用户不存在' });
+    }
+
+    // 执行解封
+    await db.query('UPDATE users SET is_blocked = 0 WHERE id = ?', [userId]);
+
+    res.json({ code: 200, message: '用户已解封' });
+  } catch (err) {
+    console.error('[解封用户错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
 });
 
 module.exports = router;

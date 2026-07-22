@@ -29,6 +29,10 @@ const TokenManager = {
     },
     isLoggedIn() {
         return !!this.getToken();
+    },
+    isAdmin() {
+        const user = this.getUser();
+        return !!(user && user.is_admin);
     }
 };
 
@@ -201,5 +205,18 @@ const GoalsAPI = {
     },
     async remove(id) {
         return apiRequest(`/api/goals/${id}`, { method: 'DELETE' });
+    }
+};
+
+// ===== Admin API =====
+const AdminAPI = {
+    async getUsers() {
+        return apiRequest('/api/auth/users');
+    },
+    async blockUser(userId) {
+        return apiRequest(`/api/auth/users/${userId}/block`, { method: 'PUT' });
+    },
+    async unblockUser(userId) {
+        return apiRequest(`/api/auth/users/${userId}/unblock`, { method: 'PUT' });
     }
 };

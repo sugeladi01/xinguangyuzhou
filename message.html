@@ -87,10 +87,20 @@
                         const d = new Date(msg.created_at);
                         const timeStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
                         const avatar = (msg.avatar && msg.avatar !== 'null') ? msg.avatar : msg.nickname ? msg.nickname.charAt(0) : '?';
+                        const isAdmin = TokenManager.isAdmin();
+                        const isOwner = TokenManager.getUser() && TokenManager.getUser().id === msg.user_id;
+                        let adminButtons = '';
+                        if (isAdmin) {
+                            adminButtons = `<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;">
+                                <button onclick="adminDeleteMessage(${msg.id})" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">🗑 删除留言</button>
+                                <button onclick="adminBlockUser(${msg.user_id})" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.72rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">🚫 拉黑用户</button>
+                            </div>`;
+                        }
                         return `<div class="message-item">
-                            <div class="msg-author">${msg.nickname || '匿名'}</div>
+                            <div class="msg-author">${msg.nickname || '匿名'}${isAdmin ? ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(201,168,76,0.1);color:#e0c868;margin-left:6px;">管理员</span>' : ''}</div>
                             <div class="msg-time">${timeStr}</div>
                             <div class="msg-content">${escapeHtml(msg.content)}</div>
+                            ${adminButtons}
                         </div>`;
                     }).join('');
                     // 入场动画
@@ -235,5 +245,45 @@
             loadMessages();
         });
     </script>
+
+<script>
+// ===== 管理员操作 =====
+async function adminDeleteMessage(messageId) {
+    if (!confirm('确定要删除这条留言吗？')) return;
+    try {
+        const res = await fetch(`${API_BASE}/api/messages/${messageId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + TokenManager.getToken() }
+        });
+        const data = await res.json();
+        if (data.code === 200) {
+            alert('留言已删除');
+            location.reload();
+        } else {
+            alert(data.message || '删除失败');
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
+}
+
+async function adminBlockUser(userId) {
+    if (!confirm('确定要拉黑该用户吗？拉黑后该用户将无法登录。')) return;
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/users/${userId}/block`, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + TokenManager.getToken() }
+        });
+        const data = await res.json();
+        if (data.code === 200) {
+            alert('用户已被拉黑');
+        } else {
+            alert(data.message || '操作失败');
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
+}
+</script>
 </body>
 </html>
