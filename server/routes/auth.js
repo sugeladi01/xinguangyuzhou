@@ -500,9 +500,9 @@ router.put('/settings/register-toggle', authMiddleware, adminMiddleware, async (
 });
 
 // -------------------------------------------
-// PUT /api/auth/change-password - 修改密码（需认证）
+// PUT /api/auth/change-password - 修改密码（仅管理员）
 // -------------------------------------------
-router.put('/change-password', authMiddleware, async (req, res) => {
+router.put('/change-password', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
