@@ -220,3 +220,16 @@ const AdminAPI = {
         return apiRequest(`/api/auth/users/${userId}/unblock`, { method: 'PUT' });
     }
 };
+
+// ===== Settings API =====
+const SettingsAPI = {
+    async getRegisterStatus() {
+        return apiRequest('/api/auth/settings/register-status');
+    },
+    async toggleRegister(enabled) {
+        return apiRequest('/api/auth/settings/register-toggle', {
+            method: 'PUT',
+            body: JSON.stringify({ enabled })
+        });
+    }
+};

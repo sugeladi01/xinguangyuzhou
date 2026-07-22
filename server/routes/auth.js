@@ -13,6 +13,17 @@ const router = express.Router();
 // -------------------------------------------
 router.post('/register', async (req, res) => {
   try {
+    // 检查是否允许注册
+    const [settings] = await db.query(
+      "SELECT value FROM settings WHERE `key` = 'register_enabled'"
+    );
+    if (settings.length > 0 && settings[0].value === '0') {
+      return res.status(403).json({
+        code: 403,
+        message: '管理员已关闭注册功能'
+      });
+    }
+
     const { username, password, nickname } = req.body;
 
     // 参数校验
@@ -411,6 +422,54 @@ router.put('/users/:id/unblock', authMiddleware, adminMiddleware, async (req, re
     res.json({ code: 200, message: '用户已解封' });
   } catch (err) {
     console.error('[解封用户错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// -------------------------------------------
+// GET /api/auth/settings/register-status - 获取注册开关状态（公开接口）
+// -------------------------------------------
+router.get('/settings/register-status', async (req, res) => {
+  try {
+    const [settings] = await db.query(
+      "SELECT value FROM settings WHERE `key` = 'register_enabled'"
+    );
+    const enabled = settings.length > 0 ? settings[0].value === '1' : true;
+
+    res.json({
+      code: 200,
+      message: 'success',
+      data: { register_enabled: enabled }
+    });
+  } catch (err) {
+    console.error('[获取注册状态错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// -------------------------------------------
+// PUT /api/auth/settings/register-toggle - 管理员切换注册开关
+// -------------------------------------------
+router.put('/settings/register-toggle', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+
+    if (enabled === undefined) {
+      return res.status(400).json({ code: 400, message: '缺少enabled参数' });
+    }
+
+    const value = enabled ? '1' : '0';
+    await db.query(
+      "UPDATE settings SET value = ? WHERE `key` = 'register_enabled'",
+      [value]
+    );
+
+    res.json({
+      code: 200,
+      message: enabled ? '注册功能已开启' : '注册功能已关闭'
+    });
+  } catch (err) {
+    console.error('[切换注册开关错误]', err);
     res.status(500).json({ code: 500, message: '服务器内部错误' });
   }
 });

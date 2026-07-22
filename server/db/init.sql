@@ -111,3 +111,20 @@ CREATE TABLE `goals` (
   KEY `idx_user_id` (`user_id`),
   KEY `idx_done` (`done`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='目标表';
+
+-- -------------------------------------------
+-- 7. 系统配置表（存储全局开关设置）
+-- -------------------------------------------
+CREATE TABLE `settings` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `key` VARCHAR(50) NOT NULL COMMENT '配置键名',
+  `value` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '配置值',
+  `description` VARCHAR(255) DEFAULT '' COMMENT '配置说明',
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_key` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统配置表';
+
+-- 初始化默认配置：允许注册
+INSERT INTO `settings` (`key`, `value`, `description`) VALUES
+('register_enabled', '1', '是否允许新用户注册（0-禁止 1-允许）');

@@ -1088,7 +1088,7 @@
                 </div>
                 <div id="login-tab-row" style="display:flex;gap:0;margin-bottom:1.2rem;background:rgba(14,14,35,0.6);border-radius:12px;padding:3px;">
                     <button class="login-tab active" onclick="switchLoginTab('login')" style="flex:1;padding:8px;border-radius:10px;border:none;background:rgba(201,168,76,0.1);color:#e0c868;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">密码登录</button>
-                    <button class="login-tab" onclick="switchLoginTab('register')" style="flex:1;padding:8px;border-radius:10px;border:none;background:transparent;color:#8a8680;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">注册</button>
+                    <button id="register-tab-btn" class="login-tab" onclick="switchLoginTab('register')" style="flex:1;padding:8px;border-radius:10px;border:none;background:transparent;color:#8a8680;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">注册</button>
                     <button class="login-tab" onclick="switchLoginTab('email')" style="flex:1;padding:8px;border-radius:10px;border:none;background:transparent;color:#8a8680;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">邮箱登录</button>
                 </div>
                 <div id="login-form">
@@ -1422,10 +1422,23 @@
         }
     }
 
+    // 查询注册状态
+    async function checkRegisterStatus() {
+        try {
+            const res = await fetch(API_BASE + '/api/auth/settings/register-status');
+            const data = await res.json();
+            if (data.code === 200 && !data.data.register_enabled) {
+                const btn = document.getElementById('register-tab-btn');
+                if (btn) btn.style.display = 'none';
+            }
+        } catch (e) {}
+    }
+
     // 页面加载时更新登录状态
     document.addEventListener('DOMContentLoaded', () => {
         updateAuthUI();
         loadShareGrid();
+        checkRegisterStatus();
     });
 
     // 监听来自 iframe 的登录状态同步

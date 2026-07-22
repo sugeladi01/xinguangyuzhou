@@ -57,6 +57,19 @@
                 </div>
             </div>
 
+            <!-- 管理员控制面板 -->
+            <div id="admin-panel" style="display:none;max-width:800px;margin:0 auto 1rem;padding:1rem;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                    <span style="font-size:0.85rem;color:#e0c868;font-weight:600;">🔧 管理员控制面板</span>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#b0aca4;cursor:pointer;">
+                            <input type="checkbox" id="register-toggle" onchange="toggleRegisterSwitch()" style="cursor:pointer;">
+                            允许新用户注册
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <!-- Message Timeline -->
             <div style="max-width:800px;margin:0 auto;">
                 <div class="message-timeline" id="msg-timeline">
@@ -151,7 +164,7 @@
                     </div>
                     <div id="login-tab-row" style="display:flex;gap:0;margin-bottom:1.2rem;background:rgba(14,14,35,0.6);border-radius:12px;padding:3px;">
                         <button class="login-tab active" onclick="switchLoginTab('login')" style="flex:1;padding:8px;border-radius:10px;border:none;background:rgba(201,168,76,0.1);color:#e0c868;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">登录</button>
-                        <button class="login-tab" onclick="switchLoginTab('register')" style="flex:1;padding:8px;border-radius:10px;border:none;background:transparent;color:#8a8680;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">注册</button>
+                        <button id="register-tab-btn" class="login-tab" onclick="switchLoginTab('register')" style="flex:1;padding:8px;border-radius:10px;border:none;background:transparent;color:#8a8680;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;cursor:pointer;">注册</button>
                     </div>
                     <div id="login-form">
                         <div style="margin-bottom:0.8rem;">
@@ -239,10 +252,56 @@
             }
         });
 
+        // ===== 查询注册状态 =====
+        async function checkRegisterStatus() {
+            try {
+                const res = await SettingsAPI.getRegisterStatus();
+                if (res.code === 200) {
+                    const enabled = res.data.register_enabled;
+                    const regBtn = document.getElementById('register-tab-btn');
+                    if (regBtn) {
+                        regBtn.style.display = enabled ? 'block' : 'none';
+                    }
+                    // 同步管理员面板开关
+                    const toggle = document.getElementById('register-toggle');
+                    if (toggle) toggle.checked = enabled;
+                }
+            } catch (e) {
+                console.error('查询注册状态失败', e);
+            }
+        }
+
+        // ===== 切换注册开关（管理员） =====
+        async function toggleRegisterSwitch() {
+            const toggle = document.getElementById('register-toggle');
+            const enabled = toggle.checked;
+            try {
+                const res = await SettingsAPI.toggleRegister(enabled);
+                if (res.code === 200) {
+                    alert(res.message);
+                    // 刷新页面以应用新状态
+                    location.reload();
+                } else {
+                    alert(res.message || '操作失败');
+                    toggle.checked = !enabled;
+                }
+            } catch (e) {
+                alert('网络错误');
+                toggle.checked = !enabled;
+            }
+        }
+
         // ===== 初始化 =====
         document.addEventListener('DOMContentLoaded', () => {
             updateMsgLoginState();
             loadMessages();
+            checkRegisterStatus();
+
+            // 如果是管理员，显示控制面板
+            if (TokenManager.isAdmin()) {
+                const panel = document.getElementById('admin-panel');
+                if (panel) panel.style.display = 'block';
+            }
         });
     </script>
 
