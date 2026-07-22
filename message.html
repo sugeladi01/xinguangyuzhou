@@ -162,7 +162,7 @@
                         let badges = '';
                         if (isAuthorAdmin) badges += ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(201,168,76,0.15);color:#e0c868;margin-left:6px;">管理员</span>';
                         if (isBlocked) badges += ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(224,96,80,0.1);color:#e06050;margin-left:4px;">已拉黑</span>';
-                        return '<div class="message-item"><div class="msg-author">'+(msg.nickname||'匿名')+badges+'</div><div class="msg-time">'+timeStr+'</div><div class="msg-content">'+escapeHtml(msg.content)+'</div>'+adminButtons+'</div>';
+                        return '<div class="message-item" data-message-id="'+msg.id+'"><div class="msg-author">'+(msg.nickname||'匿名')+badges+'</div><div class="msg-time">'+timeStr+'</div><div class="msg-content">'+escapeHtml(msg.content)+'</div>'+adminButtons+'</div>';
                     }).join('');
                     timeline.insertAdjacentHTML('beforeend', html);
                     // 显示/隐藏加载更多
@@ -174,10 +174,10 @@
                     if (reset) {
                         gsap.from('.message-item', { opacity: 0, y: -15, duration: 0.4, stagger: 0.06, ease: 'power2.out' });
                     } else {
-                        // 新增留言：淡入动画
+                        // 加载更多：仅淡入，不移动位置，避免空白间隙
                         const allItems = timeline.querySelectorAll('.message-item');
                         const newItems = Array.from(allItems).slice(-list.length);
-                        gsap.fromTo(newItems, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: 'power2.out' });
+                        gsap.fromTo(newItems, { opacity: 0 }, { opacity: 1, duration: 0.4, stagger: 0.06, ease: 'power2.out' });
                     }
                 } else if (reset) {
                     timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;">加载失败，请刷新重试</div>';
@@ -395,8 +395,15 @@ async function adminDeleteMessage(messageId) {
     try {
         const res = await AdminAPI.deleteMessage(messageId);
         if (res.code === 200) {
-            alert('留言已删除');
-            loadMessages();
+            // 直接从 DOM 移除，不重新加载，保持滚动位置
+            const el = document.querySelector('.message-item[data-message-id="'+messageId+'"]');
+            if (el) {
+                gsap.to(el, { opacity: 0, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.3, onComplete: function() { el.remove(); } });
+            }
+            // 如果当前页没有留言了，重新加载
+            if (document.querySelectorAll('.message-item').length === 0) {
+                loadMessages();
+            }
         } else {
             alert(res.message || '删除失败');
         }
@@ -411,7 +418,9 @@ async function adminBlockUser(userId) {
         const res = await AdminAPI.blockUser(userId);
         if (res.code === 200) {
             alert('用户已被拉黑');
-            loadMessages();
+            const scrollY = window.scrollY;
+            await loadMessages();
+            window.scrollTo(0, scrollY);
         } else {
             alert(res.message || '操作失败');
         }
@@ -426,7 +435,9 @@ async function adminUnblockUser(userId) {
         const res = await AdminAPI.unblockUser(userId);
         if (res.code === 200) {
             alert('用户已解封');
-            loadMessages();
+            const scrollY = window.scrollY;
+            await loadMessages();
+            window.scrollTo(0, scrollY);
         } else {
             alert(res.message || '操作失败');
         }
