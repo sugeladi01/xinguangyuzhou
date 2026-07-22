@@ -114,16 +114,16 @@
 }
 .message-item {
     position: relative; margin-bottom: 2rem; padding: 1.5rem;
-    background: rgba(14, 14, 35, 0.75);
+    background: rgba(10, 10, 30, 0.92);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(201, 168, 76, 0.15);
+    border: 1px solid rgba(201, 168, 76, 0.25);
     border-radius: 14px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     transition: all 0.3s;
 }
 .message-item:hover {
-    border-color: rgba(201, 168, 76, 0.3);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: rgba(201, 168, 76, 0.45);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 .message-item::before {
     content: ''; position: absolute; left: -24px; top: 20px;
@@ -132,20 +132,20 @@
     box-shadow: 0 0 10px rgba(201, 168, 76, 0.5);
 }
 .message-item .msg-author {
-    font-size: 0.85rem; margin-bottom: 0.3rem;
-    background: linear-gradient(90deg, #e0c868, #c8a040);
+    font-size: 0.9rem; margin-bottom: 0.3rem;
+    background: linear-gradient(90deg, #f0d878, #e0b840);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text; font-weight: 500;
+    background-clip: text; font-weight: 600;
 }
-.message-item .msg-time { font-size: 0.7rem; color: #b0aca4; margin-bottom: 0.5rem; }
-.message-item .msg-content { font-size: 0.9rem; color: #f8f6f0; line-height: 1.8; }
+.message-item .msg-time { font-size: 0.72rem; color: #c8c4bc; margin-bottom: 0.6rem; }
+.message-item .msg-content { font-size: 0.92rem; color: #fefcf6; line-height: 1.8; font-weight: 400; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
 /* 新加载的高亮消息 */
 .message-item-just-loaded {
     animation: msg-highlight 1.2s ease-out;
 }
 @keyframes msg-highlight {
-    0% { background: rgba(201, 168, 76, 0.15); border-color: rgba(201, 168, 76, 0.35); box-shadow: 0 0 20px rgba(201, 168, 76, 0.2); }
-    100% { background: rgba(14, 14, 35, 0.75); border-color: rgba(201, 168, 76, 0.15); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); }
+    0% { background: rgba(201, 168, 76, 0.2); border-color: rgba(201, 168, 76, 0.45); box-shadow: 0 0 20px rgba(201, 168, 76, 0.3); }
+    100% { background: rgba(10, 10, 30, 0.92); border-color: rgba(201, 168, 76, 0.25); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); }
 }
 .message-item .msg-reply {
     margin-top: 1rem; padding-top: 1rem;
