@@ -62,6 +62,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                     <span style="font-size:0.85rem;color:#e0c868;font-weight:600;">🔧 管理员控制面板</span>
                     <div style="display:flex;align-items:center;gap:12px;">
+                        <button onclick="showChangePasswordModal()" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(201,168,76,0.2);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.78rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">🔑 修改密码</button>
                         <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#b0aca4;cursor:pointer;">
                             <input type="checkbox" id="register-toggle" onchange="toggleRegisterSwitch()" style="cursor:pointer;">
                             允许新用户注册
@@ -78,6 +79,9 @@
                         <p style="margin-top:0.5rem;">加载留言中...</p>
                     </div>
                 </div>
+                <div id="load-more-wrap" style="text-align:center;padding:1rem 0;display:none;">
+                    <button id="load-more-btn" onclick="loadMoreMessages()" style="padding:8px 28px;border-radius:12px;border:1px solid rgba(201,168,76,0.2);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.82rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">加载更多留言</button>
+                </div>
             </div>
         </div>
     </div>
@@ -85,45 +89,115 @@
     <script src="js/particles.js"></script>
     <script src="js/api.js"></script>
     <script>
-        // ===== 加载留言列表 =====
-        async function loadMessages() {
-            const timeline = document.getElementById('msg-timeline');
+        // ===== 分页状态 =====
+        let msgPage = 1;
+        let msgTotalPages = 1;
+        const MSG_PAGE_SIZE = 15;
+        let isUserAdmin = false; // 服务端验证的管理员状态
+
+        // ===== 从服务端验证管理员状态 =====
+        async function verifyAdminStatus() {
+            if (!TokenManager.isLoggedIn()) {
+                isUserAdmin = false;
+                return;
+            }
             try {
-                const res = await MessagesAPI.getList(1, 50);
+                const res = await AuthAPI.getProfile();
+                if (res.code === 200 && res.data) {
+                    isUserAdmin = !!(res.data.is_admin);
+                    // 同步更新 localStorage
+                    const user = TokenManager.getUser();
+                    if (user) {
+                        user.is_admin = res.data.is_admin;
+                        TokenManager.setUser(user);
+                    }
+                } else {
+                    isUserAdmin = false;
+                }
+            } catch (e) {
+                // 网络异常时回退到 localStorage
+                isUserAdmin = TokenManager.isAdmin();
+            }
+        }
+
+        // ===== 加载留言列表 =====
+        async function loadMessages(reset = true) {
+            const timeline = document.getElementById('msg-timeline');
+            const loadMoreWrap = document.getElementById('load-more-wrap');
+            if (reset) {
+                msgPage = 1;
+                timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;"><i class="fas fa-spinner fa-spin" style="font-size:1.2rem;"></i><p style="margin-top:0.5rem;">加载留言中...</p></div>';
+            }
+            try {
+                const res = await MessagesAPI.getList(msgPage, MSG_PAGE_SIZE);
                 if (res.code === 200 && res.data && res.data.list) {
                     const list = res.data.list;
-                    if (list.length === 0) {
-                        timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;">暂无留言，来留下第一条吧 ✨</div>';
-                        return;
-                    }
-                    timeline.innerHTML = list.map(msg => {
-                        const d = new Date(msg.created_at);
-                        const timeStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-                        const avatar = (msg.avatar && msg.avatar !== 'null') ? msg.avatar : msg.nickname ? msg.nickname.charAt(0) : '?';
-                        const isAdmin = TokenManager.isAdmin();
-                        const isOwner = TokenManager.getUser() && TokenManager.getUser().id === msg.user_id;
-                        let adminButtons = '';
-                        if (isAdmin) {
-                            adminButtons = `<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;">
-                                <button onclick="adminDeleteMessage(${msg.id})" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">🗑 删除留言</button>
-                                <button onclick="adminBlockUser(${msg.user_id})" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.72rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">🚫 拉黑用户</button>
-                            </div>`;
+                    const pagination = res.data.pagination;
+                    msgTotalPages = pagination ? pagination.totalPages : 1;
+                    if (reset) {
+                        if (list.length === 0) {
+                            timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;">暂无留言，来留下第一条吧 ✨</div>';
+                            loadMoreWrap.style.display = 'none';
+                            return;
                         }
-                        return `<div class="message-item">
-                            <div class="msg-author">${msg.nickname || '匿名'}${isAdmin ? ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(201,168,76,0.1);color:#e0c868;margin-left:6px;">管理员</span>' : ''}</div>
-                            <div class="msg-time">${timeStr}</div>
-                            <div class="msg-content">${escapeHtml(msg.content)}</div>
-                            ${adminButtons}
-                        </div>`;
+                        timeline.innerHTML = '';
+                    }
+                    const isNewLoad = !reset;
+                    const html = list.map((msg, idx) => {
+                        const d = new Date(msg.created_at);
+                        const timeStr = d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 · '+d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+                        const isAdmin = isUserAdmin;
+                        const isOwner = TokenManager.getUser() && TokenManager.getUser().id === msg.user_id;
+                        const isBlocked = msg.author_is_blocked;
+                        const isAuthorAdmin = msg.author_is_admin;
+                        let adminButtons = '';
+                        if (isAdmin && !isOwner && !isAuthorAdmin) {
+                            if (isBlocked) {
+                                adminButtons = '<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;"><button onclick="adminDeleteMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🗑 删除留言</button><button onclick="adminUnblockUser('+msg.user_id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(80,200,120,0.2);background:rgba(80,200,120,0.06);color:#50c878;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">✓ 解封用户</button></div>';
+                            } else {
+                                adminButtons = '<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;"><button onclick="adminDeleteMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🗑 删除留言</button><button onclick="adminBlockUser('+msg.user_id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🚫 拉黑用户</button></div>';
+                            }
+                        } else if (isAdmin && isOwner) {
+                            adminButtons = '<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;"><button onclick="adminDeleteMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🗑 删除留言</button></div>';
+                        }
+                        let badges = '';
+                        if (isAuthorAdmin) badges += ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(201,168,76,0.15);color:#e0c868;margin-left:6px;">管理员</span>';
+                        if (isBlocked) badges += ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(224,96,80,0.1);color:#e06050;margin-left:4px;">已拉黑</span>';
+                        const cls = isNewLoad ? ' message-item message-item-just-loaded' : ' message-item';
+                        return '<div class="'+cls+'"><div class="msg-author">'+(msg.nickname||'匿名')+badges+'</div><div class="msg-time">'+timeStr+'</div><div class="msg-content">'+escapeHtml(msg.content)+'</div>'+adminButtons+'</div>';
                     }).join('');
-                    // 入场动画
-                    gsap.from('.message-item', { opacity: 0, y: -15, duration: 0.4, stagger: 0.06, ease: 'power2.out' });
-                } else {
+                    timeline.insertAdjacentHTML('beforeend', html);
+                    // 显示/隐藏加载更多
+                    if (msgPage < msgTotalPages) {
+                        loadMoreWrap.style.display = 'block';
+                    } else {
+                        loadMoreWrap.style.display = 'none';
+                    }
+                    if (reset) {
+                        gsap.from('.message-item', { opacity: 0, y: -15, duration: 0.4, stagger: 0.06, ease: 'power2.out' });
+                    } else {
+                        // 新增留言：淡入 + 上滑动画
+                        const newItems = timeline.querySelectorAll('.message-item-just-loaded');
+                        gsap.fromTo(newItems, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: 'power2.out', onComplete: () => {
+                            newItems.forEach(el => el.classList.remove('message-item-just-loaded'));
+                        }});
+                    }
+                } else if (reset) {
                     timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;">加载失败，请刷新重试</div>';
                 }
             } catch (err) {
-                timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;">网络错误，请检查连接</div>';
+                if (reset) timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;">网络错误，请检查连接</div>';
             }
+        }
+
+        async function loadMoreMessages() {
+            msgPage++;
+            const btn = document.getElementById('load-more-btn');
+            btn.disabled = true;
+            btn.textContent = '加载中...';
+            await loadMessages(false);
+            btn.disabled = false;
+            btn.textContent = '加载更多留言';
         }
 
         function escapeHtml(text) {
@@ -219,6 +293,16 @@
             if (res.code === 200 || res.code === 201) {
                 document.getElementById('login-modal').remove();
                 updateMsgLoginState();
+                // 先从服务端验证管理员状态
+                await verifyAdminStatus();
+                // 登录成功后重新加载留言（显示管理员按钮）
+                loadMessages();
+                // 如果是管理员，显示控制面板
+                if (isUserAdmin) {
+                    const panel = document.getElementById('admin-panel');
+                    if (panel) panel.style.display = 'block';
+                    checkRegisterStatus();
+                }
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
                 errorEl.style.display = 'block';
@@ -292,13 +376,15 @@
         }
 
         // ===== 初始化 =====
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             updateMsgLoginState();
+            // 先验证管理员状态
+            await verifyAdminStatus();
             loadMessages();
             checkRegisterStatus();
 
             // 如果是管理员，显示控制面板
-            if (TokenManager.isAdmin()) {
+            if (isUserAdmin) {
                 const panel = document.getElementById('admin-panel');
                 if (panel) panel.style.display = 'block';
             }
@@ -310,16 +396,12 @@
 async function adminDeleteMessage(messageId) {
     if (!confirm('确定要删除这条留言吗？')) return;
     try {
-        const res = await fetch(`${API_BASE}/api/messages/${messageId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + TokenManager.getToken() }
-        });
-        const data = await res.json();
-        if (data.code === 200) {
+        const res = await AdminAPI.deleteMessage(messageId);
+        if (res.code === 200) {
             alert('留言已删除');
-            location.reload();
+            loadMessages();
         } else {
-            alert(data.message || '删除失败');
+            alert(res.message || '删除失败');
         }
     } catch (e) {
         alert('网络错误');
@@ -327,20 +409,103 @@ async function adminDeleteMessage(messageId) {
 }
 
 async function adminBlockUser(userId) {
-    if (!confirm('确定要拉黑该用户吗？拉黑后该用户将无法登录。')) return;
+    if (!confirm('确定要拉黑该用户吗？拉黑后该用户将无法登录和发布内容。')) return;
     try {
-        const res = await fetch(`${API_BASE}/api/auth/users/${userId}/block`, {
-            method: 'PUT',
-            headers: { 'Authorization': 'Bearer ' + TokenManager.getToken() }
-        });
-        const data = await res.json();
-        if (data.code === 200) {
+        const res = await AdminAPI.blockUser(userId);
+        if (res.code === 200) {
             alert('用户已被拉黑');
+            loadMessages();
         } else {
-            alert(data.message || '操作失败');
+            alert(res.message || '操作失败');
         }
     } catch (e) {
         alert('网络错误');
+    }
+}
+
+async function adminUnblockUser(userId) {
+    if (!confirm('确定要解封该用户吗？解封后用户可以正常登录和发布内容。')) return;
+    try {
+        const res = await AdminAPI.unblockUser(userId);
+        if (res.code === 200) {
+            alert('用户已解封');
+            loadMessages();
+        } else {
+            alert(res.message || '操作失败');
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
+}
+
+// ===== 修改密码 =====
+function showChangePasswordModal() {
+    const existing = document.getElementById('pwd-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'pwd-modal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;justify-content:center;align-items:center;backdrop-filter:blur(8px);';
+    modal.innerHTML = `
+        <div style="width:90%;max-width:380px;background:#14142c;border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <h3 style="font-family:'ZCOOL XiaoWei',serif;color:#fff;font-size:1.1rem;">🔑 修改密码</h3>
+                <button onclick="document.getElementById('pwd-modal').remove()" style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(201,168,76,0.15);background:transparent;color:#b0aca4;cursor:pointer;font-size:0.75rem;">✕</button>
+            </div>
+            <div style="margin-bottom:0.8rem;">
+                <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">原密码</label>
+                <input type="password" id="pwd-old" placeholder="输入原密码" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+            </div>
+            <div style="margin-bottom:0.8rem;">
+                <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">新密码</label>
+                <input type="password" id="pwd-new" placeholder="输入新密码（至少6位）" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+            </div>
+            <div style="margin-bottom:0.8rem;">
+                <label style="display:block;font-size:0.72rem;color:#b0aca4;margin-bottom:4px;">确认新密码</label>
+                <input type="password" id="pwd-confirm" placeholder="再次输入新密码" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.12);background:rgba(10,10,25,0.6);color:#e8e4dc;font-family:'LXGW WenKai',sans-serif;font-size:0.82rem;outline:none;">
+            </div>
+            <div id="pwd-error" style="display:none;margin-bottom:0.8rem;padding:6px 10px;border-radius:8px;background:rgba(224,96,80,0.1);border:1px solid rgba(224,96,80,0.2);color:#e06050;font-size:0.78rem;"></div>
+            <button onclick="handleChangePassword()" style="width:100%;padding:10px;border-radius:12px;border:none;background:linear-gradient(135deg,#e0c868,#c89030);color:#0a0a10;font-family:'LXGW WenKai',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;">确认修改</button>
+        </div>
+    `;
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
+}
+
+async function handleChangePassword() {
+    const oldPwd = document.getElementById('pwd-old').value;
+    const newPwd = document.getElementById('pwd-new').value;
+    const confirmPwd = document.getElementById('pwd-confirm').value;
+    const errorEl = document.getElementById('pwd-error');
+
+    if (!oldPwd || !newPwd || !confirmPwd) {
+        errorEl.textContent = '请填写所有密码字段';
+        errorEl.style.display = 'block';
+        return;
+    }
+    if (newPwd.length < 6) {
+        errorEl.textContent = '新密码长度不能少于6个字符';
+        errorEl.style.display = 'block';
+        return;
+    }
+    if (newPwd !== confirmPwd) {
+        errorEl.textContent = '两次输入的新密码不一致';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    try {
+        const res = await AdminAPI.changePassword(oldPwd, newPwd);
+        if (res.code === 200) {
+            alert('密码修改成功！');
+            document.getElementById('pwd-modal').remove();
+        } else {
+            errorEl.textContent = res.message || '修改失败，请重试';
+            errorEl.style.display = 'block';
+        }
+    } catch (e) {
+        errorEl.textContent = '网络错误，请重试';
+        errorEl.style.display = 'block';
     }
 }
 </script>

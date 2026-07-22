@@ -218,6 +218,15 @@ const AdminAPI = {
     },
     async unblockUser(userId) {
         return apiRequest(`/api/auth/users/${userId}/unblock`, { method: 'PUT' });
+    },
+    async deleteMessage(messageId) {
+        return apiRequest(`/api/messages/${messageId}`, { method: 'DELETE' });
+    },
+    async changePassword(oldPassword, newPassword) {
+        return apiRequest('/api/auth/change-password', {
+            method: 'PUT',
+            body: JSON.stringify({ oldPassword, newPassword })
+        });
     }
 };
 

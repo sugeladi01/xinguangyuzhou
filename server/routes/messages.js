@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
     // 查询留言列表
     const [messages] = await db.query(
       `SELECT m.id, m.user_id, m.nickname, m.content, m.created_at,
-              u.avatar
+              u.avatar, u.is_admin as author_is_admin, u.is_blocked as author_is_blocked
        FROM messages m
        LEFT JOIN users u ON m.user_id = u.id
        ORDER BY m.created_at DESC
@@ -89,7 +89,7 @@ router.post('/', authMiddleware, async (req, res) => {
     // 查询新插入的留言（包含头像）
     const [newMessage] = await db.query(
       `SELECT m.id, m.user_id, m.nickname, m.content, m.created_at,
-              u.avatar
+              u.avatar, u.is_admin as author_is_admin, u.is_blocked as author_is_blocked
        FROM messages m
        LEFT JOIN users u ON m.user_id = u.id
        WHERE m.id = ?`,

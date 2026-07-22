@@ -6,6 +6,9 @@ const authMiddleware = require('../middleware/auth');
 const { adminMiddleware } = require('../middleware/auth');
 const { sendCode, verifyCode } = require('../utils/email');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'xinguang-jwt-secret-2026';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+
 const router = express.Router();
 
 // -------------------------------------------
@@ -65,17 +68,24 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // 插入用户
+    // 插入用户后查询完整信息
     const [result] = await db.query(
       'INSERT INTO users (username, password, nickname) VALUES (?, ?, ?)',
       [username, hashedPassword, nickname || username]
     );
 
-    // 生成 JWT
+    // 查询新注册用户的完整信息（包含is_admin）
+    const [newUsers] = await db.query(
+      'SELECT id, username, nickname, avatar, is_admin, is_blocked, created_at FROM users WHERE id = ?',
+      [result.insertId]
+    );
+    const newUser = newUsers[0];
+
+    // 生成 JWT（包含 is_admin）
     const token = jwt.sign(
-      { id: result.insertId, username },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { id: newUser.id, username: newUser.username, is_admin: newUser.is_admin },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
     res.status(201).json({
@@ -84,9 +94,12 @@ router.post('/register', async (req, res) => {
       data: {
         token,
         user: {
-          id: result.insertId,
-          username,
-          nickname: nickname || username
+          id: newUser.id,
+          username: newUser.username,
+          nickname: newUser.nickname,
+          avatar: newUser.avatar,
+          is_admin: newUser.is_admin,
+          created_at: newUser.created_at
         }
       }
     });
@@ -149,8 +162,8 @@ router.post('/login', async (req, res) => {
     // 生成 JWT（包含 is_admin）
     const token = jwt.sign(
       { id: user.id, username: user.username, is_admin: user.is_admin },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
     res.json({
@@ -316,19 +329,19 @@ router.post('/email-login', async (req, res) => {
                 'INSERT INTO users (username, password, nickname) VALUES (?, ?, ?)',
                 [email, hashedPassword, defaultNickname]
             );
-            const [newUser] = await db.query(
-                'SELECT id, username, nickname, avatar, created_at FROM users WHERE id = ?',
+            const [newUserRows] = await db.query(
+                'SELECT id, username, nickname, avatar, is_admin, is_blocked, created_at FROM users WHERE id = ?',
                 [result.insertId]
             );
-            user = newUser[0];
+            user = newUserRows[0];
             isNew = true;
         }
 
         // 生成 JWT（包含 is_admin）
         const token = jwt.sign(
             { id: user.id, username: user.username, is_admin: user.is_admin || 0 },
-            process.env.JWT_SECRET || 'xinguang-jwt-secret-2026',
-            { expiresIn: '7d' }
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRES_IN }
         );
 
         res.json({
@@ -470,6 +483,58 @@ router.put('/settings/register-toggle', authMiddleware, adminMiddleware, async (
     });
   } catch (err) {
     console.error('[切换注册开关错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// -------------------------------------------
+// PUT /api/auth/change-password - 修改密码（需认证）
+// -------------------------------------------
+router.put('/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        code: 400,
+        message: '原密码和新密码不能为空'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        code: 400,
+        message: '新密码长度不能少于6个字符'
+      });
+    }
+
+    // 查询当前用户
+    const [users] = await db.query(
+      'SELECT password FROM users WHERE id = ?',
+      [req.user.id]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ code: 404, message: '用户不存在' });
+    }
+
+    // 验证原密码
+    const isMatch = await bcrypt.compare(oldPassword, users[0].password);
+    if (!isMatch) {
+      return res.status(401).json({
+        code: 401,
+        message: '原密码错误'
+      });
+    }
+
+    // 加密新密码并更新
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, req.user.id]);
+
+    res.json({ code: 200, message: '密码修改成功' });
+  } catch (err) {
+    console.error('[修改密码错误]', err);
     res.status(500).json({ code: 500, message: '服务器内部错误' });
   }
 });

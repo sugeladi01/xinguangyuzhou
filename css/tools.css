@@ -114,15 +114,15 @@
 }
 .message-item {
     position: relative; margin-bottom: 2rem; padding: 1.5rem;
-    background: rgba(14, 14, 35, 0.6);
+    background: rgba(14, 14, 35, 0.75);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(201, 168, 76, 0.1);
+    border: 1px solid rgba(201, 168, 76, 0.15);
     border-radius: 14px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     transition: all 0.3s;
 }
 .message-item:hover {
-    border-color: rgba(201, 168, 76, 0.2);
+    border-color: rgba(201, 168, 76, 0.3);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 .message-item::before {
@@ -137,8 +137,16 @@
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text; font-weight: 500;
 }
-.message-item .msg-time { font-size: 0.7rem; color: var(--color-muted); margin-bottom: 0.5rem; }
-.message-item .msg-content { font-size: 0.9rem; color: var(--color-text); line-height: 1.8; }
+.message-item .msg-time { font-size: 0.7rem; color: #b0aca4; margin-bottom: 0.5rem; }
+.message-item .msg-content { font-size: 0.9rem; color: #f8f6f0; line-height: 1.8; }
+/* 新加载的高亮消息 */
+.message-item-just-loaded {
+    animation: msg-highlight 1.2s ease-out;
+}
+@keyframes msg-highlight {
+    0% { background: rgba(201, 168, 76, 0.15); border-color: rgba(201, 168, 76, 0.35); box-shadow: 0 0 20px rgba(201, 168, 76, 0.2); }
+    100% { background: rgba(14, 14, 35, 0.75); border-color: rgba(201, 168, 76, 0.15); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); }
+}
 .message-item .msg-reply {
     margin-top: 1rem; padding-top: 1rem;
     border-top: 1px solid rgba(201, 168, 76, 0.06);

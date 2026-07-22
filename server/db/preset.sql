@@ -6,11 +6,13 @@ USE xinguang;
 
 -- -------------------------------------------
 -- 预设用户（密码均为 123456 的 bcrypt 哈希）
+-- teacher 用户设为管理员
 -- -------------------------------------------
-INSERT INTO `users` (`username`, `password`, `nickname`, `avatar`) VALUES
-('xiaoming', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '小明同学', ''),
-('xiaohong', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '小红同学', ''),
-('teacher', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '李老师', '');
+INSERT INTO `users` (`username`, `password`, `nickname`, `avatar`, `is_admin`) VALUES
+('xiaoming', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '小明同学', '', 0),
+('xiaohong', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '小红同学', '', 0),
+('teacher', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '李老师', '', 1),
+('sugeladi', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '管理员', '', 1);
 
 -- -------------------------------------------
 -- 预设留言

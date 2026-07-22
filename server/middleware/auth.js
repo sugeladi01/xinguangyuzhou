@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'xinguang-jwt-secret-2026';
+
 // JWT认证中间件（增强版：每次请求查询数据库确认用户状态）
 async function authMiddleware(req, res, next) {
   // 从请求头获取 token
@@ -17,7 +19,7 @@ async function authMiddleware(req, res, next) {
 
   try {
     // 验证 token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
 
     // 查询数据库确认用户状态（是否被拉黑、是否管理员）
     const [users] = await db.query(
