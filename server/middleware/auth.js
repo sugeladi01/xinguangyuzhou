@@ -95,4 +95,3 @@ async function adminMiddleware(req, res, next) {
 
 module.exports = authMiddleware;
 module.exports.adminMiddleware = adminMiddleware;
-module.exports.authMiddleware = authMiddleware;

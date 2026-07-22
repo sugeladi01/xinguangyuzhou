@@ -336,6 +336,10 @@ router.post('/email-login', async (req, res) => {
             let hashedPassword = '';
             if (password && password.length >= 6) {
                 hashedPassword = await bcrypt.hash(password, 10);
+            } else {
+                // 邮箱注册用户未设置密码，生成随机密码占位（防止空字符串）
+                const crypto = require('crypto');
+                hashedPassword = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
             }
             const [result] = await db.query(
                 'INSERT INTO users (username, password, nickname) VALUES (?, ?, ?)',
@@ -485,8 +489,8 @@ router.put('/settings/register-toggle', authMiddleware, adminMiddleware, async (
 
     const value = enabled ? '1' : '0';
     await db.query(
-      "UPDATE settings SET value = ? WHERE `key` = 'register_enabled'",
-      [value]
+      "INSERT INTO settings (`key`, value) VALUES ('register_enabled', ?) ON DUPLICATE KEY UPDATE value = ?",
+      [value, value]
     );
 
     res.json({

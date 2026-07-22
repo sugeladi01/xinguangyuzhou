@@ -172,6 +172,12 @@ router.put('/:id', async (req, res) => {
           message: '目标内容不能为空'
         });
       }
+      if (text.trim().length > 500) {
+        return res.status(400).json({
+          code: 400,
+          message: '目标内容不能超过500个字符'
+        });
+      }
       updateFields.push('text = ?');
       updateParams.push(text.trim());
     }

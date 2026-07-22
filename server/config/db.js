@@ -13,6 +13,14 @@ const pool = mysql.createPool({
   charset: 'utf8mb4'
 });
 
+// 连接池错误处理，防止未捕获异常导致进程崩溃
+pool.on('error', (err) => {
+  console.error('[数据库连接池错误]', err.message);
+  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+    console.log('[数据库] 连接丢失，连接池将自动重连');
+  }
+});
+
 // 使用 promise 接口
 const promisePool = pool.promise();
 

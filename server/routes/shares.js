@@ -248,7 +248,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ code: 404, message: '分享不存在' });
     }
-    if (rows[0].user_id !== req.user.id) {
+    if (rows[0].user_id !== req.user.id && !req.user.is_admin) {
       return res.status(403).json({ code: 403, message: '无权删除他人的分享' });
     }
 

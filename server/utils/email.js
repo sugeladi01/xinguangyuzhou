@@ -14,6 +14,16 @@ const transporter = nodemailer.createTransport({
 const codeStore = new Map();
 const CODE_EXPIRE = 5 * 60 * 1000; // 5分钟过期
 
+// 定时清理过期验证码，防止内存泄漏
+setInterval(() => {
+    const now = Date.now();
+    for (const [email, record] of codeStore) {
+        if (now - record.time > CODE_EXPIRE) {
+            codeStore.delete(email);
+        }
+    }
+}, 60 * 1000);
+
 /**
  * 发送邮箱验证码
  * @param {string} email - 目标邮箱
@@ -38,7 +48,7 @@ async function sendCode(email) {
 
     try {
         await transporter.sendMail({
-            from: `"心光宇宙" <2772524169@qq.com>`,
+            from: `"心光宇宙" <${process.env.EMAIL_USER || '2772524169@qq.com'}>`,
             to: email,
             subject: '心光宇宙 · 验证码',
             html: `
