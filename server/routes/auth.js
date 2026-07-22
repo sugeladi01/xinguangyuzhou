@@ -280,6 +280,14 @@ router.post('/send-code', async (req, res) => {
         if (!email) {
             return res.status(400).json({ code: 400, message: '请输入邮箱' });
         }
+        // 检查该邮箱是否为新用户 + 注册是否已关闭，避免浪费验证码
+        const [existingUsers] = await db.query('SELECT id FROM users WHERE username = ?', [email]);
+        if (existingUsers.length === 0) {
+            const [settings] = await db.query("SELECT value FROM settings WHERE `key` = 'register_enabled'");
+            if (settings.length > 0 && settings[0].value === '0') {
+                return res.status(403).json({ code: 403, message: '管理员已关闭注册功能' });
+            }
+        }
         const result = await sendCode(email);
         if (result.success) {
             res.json({ code: 200, message: result.message });
