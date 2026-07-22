@@ -118,7 +118,7 @@
     border: 1px solid rgba(201, 168, 76, 0.25);
     border-radius: 14px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-    transition: all 0.3s;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
 .message-item:hover {
     border-color: rgba(201, 168, 76, 0.6);

@@ -172,7 +172,7 @@
                         loadMoreWrap.style.display = 'none';
                     }
                     if (reset) {
-                        gsap.from('.message-item', { opacity: 0, y: -15, duration: 0.4, stagger: 0.06, ease: 'power2.out' });
+                        gsap.fromTo('.message-item', { opacity: 0, y: -15 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.06, ease: 'power2.out' });
                     } else {
                         // 加载更多：仅淡入，不移动位置，避免空白间隙
                         const allItems = timeline.querySelectorAll('.message-item');
