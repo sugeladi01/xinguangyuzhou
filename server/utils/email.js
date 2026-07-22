@@ -1,15 +1,6 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// QQ邮箱 SMTP 配置
-const transporter = nodemailer.createTransport({
-    host: 'smtp.qq.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // 验证码存储（生产环境建议用Redis，这里用内存Map）
 const codeStore = new Map();
@@ -48,8 +39,8 @@ async function sendCode(email) {
     const code = String(Math.floor(100000 + Math.random() * 900000));
 
     try {
-        await transporter.sendMail({
-            from: '心光宇宙 <2772524169@qq.com>',
+        await resend.emails.send({
+            from: '心光宇宙 <no-reply@a1b2.tech>',
             to: email,
             subject: '心光宇宙 · 验证码',
             html: `
