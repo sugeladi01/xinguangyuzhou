@@ -142,7 +142,6 @@
                         }
                         timeline.innerHTML = '';
                     }
-                    const isNewLoad = !reset;
                     const html = list.map((msg, idx) => {
                         const d = new Date(msg.created_at);
                         const timeStr = d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 · '+d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
@@ -163,8 +162,7 @@
                         let badges = '';
                         if (isAuthorAdmin) badges += ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(201,168,76,0.15);color:#e0c868;margin-left:6px;">管理员</span>';
                         if (isBlocked) badges += ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(224,96,80,0.1);color:#e06050;margin-left:4px;">已拉黑</span>';
-                        const cls = isNewLoad ? ' message-item message-item-just-loaded' : ' message-item';
-                        return '<div class="'+cls+'"><div class="msg-author">'+(msg.nickname||'匿名')+badges+'</div><div class="msg-time">'+timeStr+'</div><div class="msg-content">'+escapeHtml(msg.content)+'</div>'+adminButtons+'</div>';
+                        return '<div class="message-item"><div class="msg-author">'+(msg.nickname||'匿名')+badges+'</div><div class="msg-time">'+timeStr+'</div><div class="msg-content">'+escapeHtml(msg.content)+'</div>'+adminButtons+'</div>';
                     }).join('');
                     timeline.insertAdjacentHTML('beforeend', html);
                     // 显示/隐藏加载更多
@@ -176,11 +174,10 @@
                     if (reset) {
                         gsap.from('.message-item', { opacity: 0, y: -15, duration: 0.4, stagger: 0.06, ease: 'power2.out' });
                     } else {
-                        // 新增留言：淡入 + 上滑动画
-                        const newItems = timeline.querySelectorAll('.message-item-just-loaded');
-                        gsap.fromTo(newItems, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: 'power2.out', onComplete: () => {
-                            newItems.forEach(el => el.classList.remove('message-item-just-loaded'));
-                        }});
+                        // 新增留言：淡入动画
+                        const allItems = timeline.querySelectorAll('.message-item');
+                        const newItems = Array.from(allItems).slice(-list.length);
+                        gsap.fromTo(newItems, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: 'power2.out' });
                     }
                 } else if (reset) {
                     timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;">加载失败，请刷新重试</div>';
