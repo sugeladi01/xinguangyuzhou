@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 
+// QQ邮箱 SMTP 配置
 const transporter = nodemailer.createTransport({
     host: 'smtp.qq.com',
     port: 465,
@@ -48,7 +49,7 @@ async function sendCode(email) {
 
     try {
         await transporter.sendMail({
-            from: `"心光宇宙" <${process.env.EMAIL_USER || '2772524169@qq.com'}>`,
+            from: '心光宇宙 <2772524169@qq.com>',
             to: email,
             subject: '心光宇宙 · 验证码',
             html: `
