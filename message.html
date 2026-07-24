@@ -366,15 +366,7 @@
             }
 
             if (res.code === 200 || res.code === 201) {
-                document.getElementById('login-modal').remove();
-                updateMsgLoginState();
-                await verifyAdminStatus();
-                await loadMessages();
-                checkRegisterStatus();
-                if (isUserAdmin) {
-                    const panel = document.getElementById('admin-panel');
-                    if (panel) panel.style.display = 'block';
-                }
+                location.reload();
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
                 errorEl.style.display = 'block';
