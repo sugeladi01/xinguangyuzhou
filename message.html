@@ -366,7 +366,12 @@
             }
 
             if (res.code === 200 || res.code === 201) {
-                location.reload();
+                document.getElementById('login-modal').remove();
+                setTimeout(() => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('_t', Date.now());
+                    window.location.href = url.toString();
+                }, 100);
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
                 errorEl.style.display = 'block';
