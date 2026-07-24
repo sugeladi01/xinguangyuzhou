@@ -370,8 +370,14 @@
 
             if (res.code === 200 || res.code === 201) {
                 document.getElementById('login-modal').remove();
-                // 强制从服务器重新加载，绕过所有缓存
-                window.location = window.location.pathname + '?_=' + Date.now();
+                // 直接更新 UI，不刷新页面（避免浏览器缓存导致状态不同步）
+                updateMsgLoginState();
+                await verifyAdminStatus();
+                if (isUserAdmin) {
+                    const panel = document.getElementById('admin-panel');
+                    if (panel) panel.style.display = 'block';
+                }
+                await loadMessages();
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
                 errorEl.style.display = 'block';
