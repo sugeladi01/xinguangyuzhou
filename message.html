@@ -369,11 +369,11 @@
                 document.getElementById('login-modal').remove();
                 updateMsgLoginState();
                 await verifyAdminStatus();
-                loadMessages();
+                await loadMessages();
+                checkRegisterStatus();
                 if (isUserAdmin) {
                     const panel = document.getElementById('admin-panel');
                     if (panel) panel.style.display = 'block';
-                    checkRegisterStatus();
                 }
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
