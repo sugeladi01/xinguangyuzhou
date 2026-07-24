@@ -367,11 +367,14 @@
 
             if (res.code === 200 || res.code === 201) {
                 document.getElementById('login-modal').remove();
-                setTimeout(() => {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('_t', Date.now());
-                    window.location.href = url.toString();
-                }, 100);
+                updateMsgLoginState();
+                await verifyAdminStatus();
+                await loadMessages();
+                checkRegisterStatus();
+                if (isUserAdmin) {
+                    const panel = document.getElementById('admin-panel');
+                    if (panel) panel.style.display = 'block';
+                }
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
                 errorEl.style.display = 'block';
@@ -449,7 +452,7 @@
             updateMsgLoginState();
             // 先验证管理员状态
             await verifyAdminStatus();
-            loadMessages();
+            await loadMessages();
             checkRegisterStatus();
 
             // 如果是管理员，显示控制面板
