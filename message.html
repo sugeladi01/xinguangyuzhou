@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>留言板 · 校园正能量</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -367,14 +370,8 @@
 
             if (res.code === 200 || res.code === 201) {
                 document.getElementById('login-modal').remove();
-                updateMsgLoginState();
-                await verifyAdminStatus();
-                await loadMessages();
-                checkRegisterStatus();
-                if (isUserAdmin) {
-                    const panel = document.getElementById('admin-panel');
-                    if (panel) panel.style.display = 'block';
-                }
+                // 强制从服务器重新加载，绕过所有缓存
+                window.location = window.location.pathname + '?_=' + Date.now();
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
                 errorEl.style.display = 'block';
