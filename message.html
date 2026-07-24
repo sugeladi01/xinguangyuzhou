@@ -370,19 +370,8 @@
 
             if (res.code === 200 || res.code === 201) {
                 document.getElementById('login-modal').remove();
-                // 直接更新 UI，不刷新页面，避免缓存导致状态不同步
-                updateMsgLoginState();
-                // 重新验证管理员状态
-                await verifyAdminStatus();
-                // 重新加载留言列表
-                await loadMessages();
-                // 如果是管理员，显示控制面板
-                if (isUserAdmin) {
-                    const panel = document.getElementById('admin-panel');
-                    if (panel) panel.style.display = 'block';
-                }
-                // 检查注册开关状态
-                checkRegisterStatus();
+                // 统一刷新留言区所有状态（登录提示、管理员面板、留言列表）
+                setTimeout(() => refreshMessagePageState(), 50);
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
                 errorEl.style.display = 'block';
@@ -455,18 +444,35 @@
             }
         }
 
-        // ===== 初始化 =====
-        document.addEventListener('DOMContentLoaded', async () => {
+        // ===== 刷新留言区登录状态（封装为公共函数，登录/退出/页面恢复都调用） =====
+        async function refreshMessagePageState() {
             updateMsgLoginState();
-            // 先验证管理员状态
             await verifyAdminStatus();
             await loadMessages();
             checkRegisterStatus();
-
-            // 如果是管理员，显示控制面板
             if (isUserAdmin) {
                 const panel = document.getElementById('admin-panel');
                 if (panel) panel.style.display = 'block';
+            } else {
+                const panel = document.getElementById('admin-panel');
+                if (panel) panel.style.display = 'none';
+            }
+        }
+
+        // ===== 初始化：页面首次加载 =====
+        document.addEventListener('DOMContentLoaded', () => refreshMessagePageState());
+
+        // ===== bfcache 恢复：从浏览器前进/后退缓存恢复时重新检查状态 =====
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                refreshMessagePageState();
+            }
+        });
+
+        // ===== 跨页面同步：其他页面登录/退出后，localStorage 变化时自动刷新 =====
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'xinguang_token' || e.key === 'xinguang_user') {
+                refreshMessagePageState();
             }
         });
     </script>
