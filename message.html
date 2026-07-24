@@ -12,8 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=LXGW+WenKai&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/tools.css">
+    <link rel="stylesheet" href="css/style.css?v=20260724">
+    <link rel="stylesheet" href="css/tools.css?v=20260724">
 </head>
 <body>
     <canvas id="particle-canvas"></canvas>
@@ -89,8 +89,8 @@
         </div>
     </div>
 
-    <script src="js/particles.js"></script>
-    <script src="js/api.js"></script>
+    <script src="js/particles.js?v=20260724"></script>
+    <script src="js/api.js?v=20260724"></script>
     <script>
         // ===== 分页状态 =====
         let msgPage = 1;
@@ -370,14 +370,10 @@
 
             if (res.code === 200 || res.code === 201) {
                 document.getElementById('login-modal').remove();
-                // 直接更新 UI，不刷新页面（避免浏览器缓存导致状态不同步）
+                // 先直接更新 UI
                 updateMsgLoginState();
-                await verifyAdminStatus();
-                if (isUserAdmin) {
-                    const panel = document.getElementById('admin-panel');
-                    if (panel) panel.style.display = 'block';
-                }
-                await loadMessages();
+                // 然后用唯一 URL 刷新页面，确保服务端状态和客户端一致
+                location.replace(location.pathname + '?v=' + Date.now());
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
                 errorEl.style.display = 'block';
