@@ -370,10 +370,19 @@
 
             if (res.code === 200 || res.code === 201) {
                 document.getElementById('login-modal').remove();
-                // 先直接更新 UI
+                // 直接更新 UI，不刷新页面，避免缓存导致状态不同步
                 updateMsgLoginState();
-                // 然后用唯一 URL 刷新页面，确保服务端状态和客户端一致
-                location.replace(location.pathname + '?v=' + Date.now());
+                // 重新验证管理员状态
+                await verifyAdminStatus();
+                // 重新加载留言列表
+                await loadMessages();
+                // 如果是管理员，显示控制面板
+                if (isUserAdmin) {
+                    const panel = document.getElementById('admin-panel');
+                    if (panel) panel.style.display = 'block';
+                }
+                // 检查注册开关状态
+                checkRegisterStatus();
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
                 errorEl.style.display = 'block';
