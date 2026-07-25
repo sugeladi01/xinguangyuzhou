@@ -615,11 +615,12 @@
 
     async function verifyAdminStatus() {
         // 先快速检查 localStorage 缓存（不依赖网络）
-        if (TokenManager.isAdmin()) {
+        const localAdmin = TokenManager.isAdmin();
+        if (localAdmin) {
             isUserAdmin = true;
         }
         if (!TokenManager.isLoggedIn()) {
-            isUserAdmin = TokenManager.isAdmin();
+            isUserAdmin = localAdmin;
             return;
         }
         try {
@@ -633,12 +634,12 @@
                     TokenManager.setUser(user);
                 }
             } else {
-                // API 返回异常，回退到 localStorage
-                isUserAdmin = TokenManager.isAdmin();
+                // API 返回异常（如 401 触发 localStorage 被清空），不覆盖已确认的 admin 状态
+                if (!isUserAdmin) isUserAdmin = TokenManager.isAdmin();
             }
         } catch (e) {
-            // 网络错误，回退到 localStorage
-            isUserAdmin = TokenManager.isAdmin();
+            // 网络错误，不覆盖已确认的 admin 状态
+            if (!isUserAdmin) isUserAdmin = TokenManager.isAdmin();
         }
     }
 

@@ -8,31 +8,30 @@ const JWT_SECRET = process.env.JWT_SECRET || 'xinguang-jwt-secret-2026';
 
 const router = express.Router();
 
-// 缓存 is_hidden 列是否存在（首次请求时检测，之后复用）
-let hasHiddenColumn = null;
-// 缓存 category 列是否存在
-let hasCategoryColumn = null;
-
+// 检测 is_hidden 列是否存在（每次请求实时查询 INFORMATION_SCHEMA，避免永久缓存导致迁移后仍不生效）
 async function checkHiddenColumn() {
-  if (hasHiddenColumn !== null) return hasHiddenColumn;
   try {
-    await db.query('SELECT is_hidden FROM seminars LIMIT 1');
-    hasHiddenColumn = true;
+    const [rows] = await db.query(
+      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'seminars' AND COLUMN_NAME = 'is_hidden'`
+    );
+    return rows[0].cnt > 0;
   } catch (e) {
-    hasHiddenColumn = false;
+    return false;
   }
-  return hasHiddenColumn;
 }
 
+// 检测 category 列是否存在（每次请求实时查询，同上）
 async function checkCategoryColumn() {
-  if (hasCategoryColumn !== null) return hasCategoryColumn;
   try {
-    await db.query('SELECT category FROM seminars LIMIT 1');
-    hasCategoryColumn = true;
+    const [rows] = await db.query(
+      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'seminars' AND COLUMN_NAME = 'category'`
+    );
+    return rows[0].cnt > 0;
   } catch (e) {
-    hasCategoryColumn = false;
+    return false;
   }
-  return hasCategoryColumn;
 }
 
 // 可选的 admin 检测（不强制要求登录，仅判断当前用户是否为管理员）
