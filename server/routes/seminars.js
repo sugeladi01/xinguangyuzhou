@@ -10,6 +10,8 @@ const router = express.Router();
 
 // 缓存 is_hidden 列是否存在（首次请求时检测，之后复用）
 let hasHiddenColumn = null;
+// 缓存 category 列是否存在
+let hasCategoryColumn = null;
 
 async function checkHiddenColumn() {
   if (hasHiddenColumn !== null) return hasHiddenColumn;
@@ -20,6 +22,17 @@ async function checkHiddenColumn() {
     hasHiddenColumn = false;
   }
   return hasHiddenColumn;
+}
+
+async function checkCategoryColumn() {
+  if (hasCategoryColumn !== null) return hasCategoryColumn;
+  try {
+    await db.query('SELECT category FROM seminars LIMIT 1');
+    hasCategoryColumn = true;
+  } catch (e) {
+    hasCategoryColumn = false;
+  }
+  return hasCategoryColumn;
 }
 
 // 可选的 admin 检测（不强制要求登录，仅判断当前用户是否为管理员）
@@ -50,10 +63,14 @@ router.get('/', async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
     const offset = (page - 1) * pageSize;
-    const tab = req.query.tab || ''; // 热门/最新/线上/线下
+    const tab = req.query.tab || ''; // 分类：热门研讨/学习交流/合作社交 或 排序：热门/最新
 
     const isAdmin = await optionalAdminCheck(req);
     const canFilterHidden = await checkHiddenColumn();
+    const canFilterCategory = await checkCategoryColumn();
+
+    const knownCategories = ['热门研讨', '学习交流', '合作社交'];
+    const isCategoryTab = knownCategories.includes(tab);
 
     let whereClause = '';
     // 仅当列存在 且 非管理员 时，过滤被屏蔽的话题
@@ -63,7 +80,14 @@ router.get('/', async (req, res) => {
     let orderBy = 's.created_at DESC';
     const params = [];
 
-    if (tab === '热门') {
+    if (isCategoryTab && canFilterCategory) {
+      // 按 category 字段筛选
+      whereClause = whereClause
+        ? `${whereClause} AND s.category = ?`
+        : 'WHERE s.category = ?';
+      params.push(tab);
+      orderBy = 's.created_at DESC';
+    } else if (tab === '热门') {
       orderBy = 's.like_count DESC, s.join_count DESC';
     } else if (tab === '最新') {
       orderBy = 's.created_at DESC';
@@ -86,11 +110,12 @@ router.get('/', async (req, res) => {
     );
     const total = countResult[0].total;
 
-    // 查询话题列表（列不存在时跳过 is_hidden）
+    // 查询话题列表（列不存在时跳过）
     const hiddenField = canFilterHidden ? 's.is_hidden,' : '0 as is_hidden,';
+    const categoryField = canFilterCategory ? 's.category,' : "'热门研讨' as category,";
     const [seminars] = await db.query(
       `SELECT s.id, s.user_id, s.title, s.description, s.mode, s.time_display,
-              s.tags, s.like_count, s.join_count, ${hiddenField} s.created_at,
+              s.tags, s.like_count, s.join_count, ${hiddenField} ${categoryField} s.created_at,
               u.nickname, u.avatar
        FROM seminars s
        LEFT JOIN users u ON s.user_id = u.id
@@ -196,7 +221,7 @@ router.post('/', authMiddleware, async (req, res) => {
         message: '管理员已关闭发起研讨功能'
       });
     }
-    const { title, description, mode, time_display, tags } = req.body;
+    const { title, description, mode, time_display, tags, category } = req.body;
 
     // 参数校验
     if (!title || title.trim() === '') {
@@ -234,17 +259,15 @@ router.post('/', authMiddleware, async (req, res) => {
       }
     }
 
+    const canCategory = await checkCategoryColumn();
     // 插入话题
     const [result] = await db.query(
-      'INSERT INTO seminars (user_id, title, description, mode, time_display, tags) VALUES (?, ?, ?, ?, ?, ?)',
-      [
-        req.user.id,
-        title.trim(),
-        description.trim(),
-        mode || '线上',
-        time_display || '',
-        tagsJson
-      ]
+      canCategory
+        ? 'INSERT INTO seminars (user_id, title, description, category, mode, time_display, tags) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        : 'INSERT INTO seminars (user_id, title, description, mode, time_display, tags) VALUES (?, ?, ?, ?, ?, ?)',
+      canCategory
+        ? [req.user.id, title.trim(), description.trim(), category || '热门研讨', mode || '线上', time_display || '', tagsJson]
+        : [req.user.id, title.trim(), description.trim(), mode || '线上', time_display || '', tagsJson]
     );
 
     // 查询新插入的话题

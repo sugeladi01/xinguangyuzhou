@@ -161,10 +161,10 @@ const SeminarsAPI = {
     async getDetail(id) {
         return apiRequest(`/api/seminars/${id}`);
     },
-    async create(title, description, mode, time_display, tags) {
+    async create(title, description, mode, time_display, tags, category) {
         return apiRequest('/api/seminars', {
             method: 'POST',
-            body: JSON.stringify({ title, description, mode, time_display, tags })
+            body: JSON.stringify({ title, description, mode, time_display, tags, category })
         });
     },
     async like(id) {

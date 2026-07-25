@@ -1,6 +1,12 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend = null;
+function getResend() {
+    if (!resend && process.env.RESEND_API_KEY) {
+        resend = new Resend(process.env.RESEND_API_KEY);
+    }
+    return resend;
+}
 
 // 验证码存储（生产环境建议用Redis，这里用内存Map）
 const codeStore = new Map();
@@ -39,7 +45,11 @@ async function sendCode(email) {
     const code = String(Math.floor(100000 + Math.random() * 900000));
 
     try {
-        await resend.emails.send({
+        const r = getResend();
+        if (!r) {
+            return { success: false, message: '邮件服务暂未配置' };
+        }
+        await r.emails.send({
             from: '心光宇宙 <no-reply@a1b2.tech>',
             to: email,
             subject: '心光宇宙 · 验证码',

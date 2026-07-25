@@ -614,18 +614,30 @@
     let isUserAdmin = false;
 
     async function verifyAdminStatus() {
+        // 先快速检查 localStorage 缓存（不依赖网络）
+        if (TokenManager.isAdmin()) {
+            isUserAdmin = true;
+        }
         if (!TokenManager.isLoggedIn()) {
-            isUserAdmin = false;
+            isUserAdmin = TokenManager.isAdmin();
             return;
         }
         try {
             const res = await AuthAPI.getProfile();
             if (res.code === 200 && res.data) {
                 isUserAdmin = !!(res.data.is_admin);
+                // 同步更新 localStorage 缓存
+                if (res.data.is_admin) {
+                    const user = TokenManager.getUser() || {};
+                    user.is_admin = true;
+                    TokenManager.setUser(user);
+                }
             } else {
-                isUserAdmin = false;
+                // API 返回异常，回退到 localStorage
+                isUserAdmin = TokenManager.isAdmin();
             }
         } catch (e) {
+            // 网络错误，回退到 localStorage
             isUserAdmin = TokenManager.isAdmin();
         }
     }
@@ -652,9 +664,9 @@
         if (!panel) return;
         panel.innerHTML = '<div style="text-align:center;padding:2rem;color:#8a8680;"><i class="fas fa-spinner fa-spin" style="font-size:1.2rem;"></i><p style="margin-top:0.5rem;">加载中...</p></div>';
 
-        // tab 映射到 API 参数
-        const tabMap = { 'p-hot': '热门', 'p-learn': '最新', 'p-collab': '热门' };
-        const apiTab = tabMap[tab] || '热门';
+        // tab 映射到 API 参数（分类筛选）
+        const tabMap = { 'p-hot': '热门研讨', 'p-learn': '学习交流', 'p-collab': '合作社交' };
+        const apiTab = tabMap[tab] || '热门研讨';
 
         try {
             const res = await SeminarsAPI.getList(1, 20, apiTab);
@@ -708,16 +720,14 @@
         };
 
         card.innerHTML = `
-            ${isCollab ? `<div class="s-author-row">
+            <div class="s-author-row">
                 <div class="s-avatar">${avatar}</div>
-                <div class="s-author-info"><div class="s-author-name">${escapeHtml(nickname)}</div><div class="s-author-dept">心光宇宙 · 研讨成员</div></div>
-                <button class="s-follow">+ 关注</button>
-            </div>` : ''}
+                <div class="s-author-info"><div class="s-author-name">${escapeHtml(nickname)}</div><div class="s-author-dept">发起人</div></div>
+            </div>
             <div class="s-card-top">
                 <span class="s-mode ${modeClass}">${modeIcon}</span>
                 <span class="s-time"><i class="far fa-clock"></i> ${escapeHtml(timeDisplay)}</span>
-                <span class="s-author-tag" style="font-size:0.7rem;color:#8a8680;margin-left:8px;"><i class="fas fa-user" style="font-size:0.6rem;margin-right:3px;"></i>${escapeHtml(nickname)}</span>
-                ${sem.is_hidden ? '<span style="font-size:0.65rem;padding:2px 8px;border-radius:6px;background:rgba(224,96,80,0.1);color:#e06050;margin-left:8px;">已屏蔽</span>' : ''}
+                ${sem.is_hidden ? '<span style="font-size:0.65rem;padding:2px 8px;border-radius:6px;background:rgba(224,96,80,0.1);color:#e06050;margin-left:auto;">已屏蔽</span>' : ''}
             </div>
             <div class="s-card-body">
                 <div class="s-card-title">${escapeHtml(sem.title)}</div>
@@ -741,8 +751,7 @@
 
         // 绑定事件
         initCardEvents(card, 's' + sem.id);
-        if (!isCollab) addJoinBtn(card, 's' + sem.id);
-        initFollowBtn(card);
+        addJoinBtn(card, 's' + sem.id);
         return card;
     }
 
@@ -927,24 +936,6 @@
         });
     }
 
-    // ===== FOLLOW =====
-    function initFollowBtn(card) {
-        const btn = card.querySelector('.s-follow');
-        if (!btn) return;
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (btn.textContent.includes('关注')) {
-                btn.textContent = '✓ 已关注';
-                btn.style.background = 'rgba(201,168,76,0.1)';
-                btn.style.borderColor = 'rgba(201,168,76,0.25)';
-            } else {
-                btn.textContent = '+ 关注';
-                btn.style.background = '';
-                btn.style.borderColor = '';
-            }
-        });
-    }
-
     // ===== ENTRANCE ANIMATIONS =====
     function playAnimations() {
         gsap.fromTo('.sem-hero', { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out', clearProps: 'opacity,transform' });
@@ -1038,7 +1029,11 @@
             submitBtn.disabled = true;
             submitBtn.textContent = '发布中...';
 
-            const res = await SeminarsAPI.create(title, desc, mode, timeDisplay, tags);
+            // 将 tab 值映射为 category
+            const tabCategoryMap = { 'p-hot': '热门研讨', 'p-learn': '学习交流', 'p-collab': '合作社交' };
+            const category = tabCategoryMap[tab] || '热门研讨';
+
+            const res = await SeminarsAPI.create(title, desc, mode, timeDisplay, tags, category);
             if (res.code === 201) {
                 // 关闭弹窗，刷新列表
                 modal.classList.remove('open');
