@@ -227,6 +227,7 @@
                 if (user) {
                     loginHint.style.display = 'none';
                     nameGroup.style.display = 'none';
+                    document.getElementById('msg-name').value = user.nickname || user.username || '';
                 } else {
                     loginHint.style.display = 'block';
                     nameGroup.style.display = 'block';
@@ -525,9 +526,11 @@
         // ===== 初始化：页面首次加载 =====
         document.addEventListener('DOMContentLoaded', () => refreshMessagePageState());
 
-        // ===== bfcache 恢复 & 页面切换：始终重新检查登录状态 =====
-        window.addEventListener('pageshow', () => {
-            refreshMessagePageState();
+        // ===== bfcache 恢复：从浏览器前进/后退缓存恢复时重新检查状态 =====
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                refreshMessagePageState();
+            }
         });
 
         // ===== 跨页面同步：其他页面登录/退出后，localStorage 变化时自动刷新 =====
