@@ -752,6 +752,8 @@
         const nickname = sem.nickname || '匿名';
         const avatar = nickname.charAt(0);
         const isCollab = tab === 'p-collab';
+        const authorBlocked = sem.author_is_blocked;
+        const authorAdmin = sem.author_is_admin;
 
         // 初始化 store
         store['s' + sem.id] = {
@@ -764,7 +766,7 @@
         card.innerHTML = `
             <div class="s-author-row">
                 <div class="s-avatar">${avatar}</div>
-                <div class="s-author-info"><div class="s-author-name">${escapeHtml(nickname)}</div><div class="s-author-dept">发起人</div></div>
+                <div class="s-author-info"><div class="s-author-name">${escapeHtml(nickname)}${authorAdmin ? ' <span style="font-size:0.6rem;padding:1px 5px;border-radius:5px;background:rgba(201,168,76,0.15);color:#e0c868;margin-left:4px;">管理员</span>' : ''}${authorBlocked ? ' <span style="font-size:0.6rem;padding:1px 5px;border-radius:5px;background:rgba(224,96,80,0.1);color:#e06050;margin-left:4px;">已拉黑</span>' : ''}</div><div class="s-author-dept">发起人</div></div>
             </div>
             <div class="s-card-top">
                 <span class="s-mode ${modeClass}">${modeIcon}</span>
@@ -773,7 +775,7 @@
             </div>
             <div class="s-card-body">
                 <div class="s-card-title">${escapeHtml(sem.title)}</div>
-                <div class="s-card-desc">${escapeHtml(sem.description)}</div>
+                <div class="s-card-desc">${authorBlocked ? '<span style="color:#999;font-style:italic;">该发起人已被拉黑，内容已隐藏</span>' : escapeHtml(sem.description)}</div>
             </div>
             <div class="s-card-foot">
                 <div class="s-tags">${tagHtml}</div>
@@ -783,12 +785,16 @@
                     ${!isCollab ? '' : `<span class="s-act"><i class="fas fa-eye"></i> <span class="s-act-num">${sem.read_count || 0}</span></span>`}
                 </div>
             </div>
-            ${isUserAdmin ? `<div class="s-admin-actions" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(201,168,76,0.08);display:flex;gap:8px;justify-content:flex-end;">
+            ${isUserAdmin ? `<div class="s-admin-actions" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(201,168,76,0.08);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
                 ${sem.is_hidden
                     ? `<button onclick="event.stopPropagation();adminUnhideSeminar(${sem.id})" style="padding:3px 10px;border-radius:8px;border:1px solid rgba(80,200,120,0.2);background:rgba(80,200,120,0.06);color:#50c878;font-size:0.7rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">恢复显示</button>`
                     : `<button onclick="event.stopPropagation();adminHideSeminar(${sem.id})" style="padding:3px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.7rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">屏蔽</button>`
                 }
                 <button onclick="event.stopPropagation();adminDeleteSeminar(${sem.id})" style="padding:3px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.7rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">删除</button>
+                ${!authorAdmin && sem.user_id ? (authorBlocked
+                    ? `<button onclick="event.stopPropagation();adminUnblockSeminarAuthor(${sem.user_id})" style="padding:3px 10px;border-radius:8px;border:1px solid rgba(80,200,120,0.2);background:rgba(80,200,120,0.06);color:#50c878;font-size:0.7rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">解封发起人</button>`
+                    : `<button onclick="event.stopPropagation();adminBlockSeminarAuthor(${sem.user_id})" style="padding:3px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.7rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">拉黑发起人</button>`)
+                    : ''}
             </div>` : ''}`;
 
         // 绑定事件
@@ -1147,6 +1153,38 @@
             const res = await SeminarsAPI.toggleHide(id, false);
             if (res.code === 200) {
                 alert('研讨已恢复显示');
+                const activeTab = document.querySelector('.sem-tab.active');
+                if (activeTab) loadSeminars(activeTab.dataset.tab);
+            } else {
+                alert(res.message || '操作失败');
+            }
+        } catch (e) {
+            alert('网络错误');
+        }
+    }
+
+    async function adminBlockSeminarAuthor(userId) {
+        if (!confirm('确定要拉黑该发起人吗？拉黑后该用户将无法登录和发布内容。')) return;
+        try {
+            const res = await AdminAPI.blockUser(userId);
+            if (res.code === 200) {
+                alert('发起人已被拉黑');
+                const activeTab = document.querySelector('.sem-tab.active');
+                if (activeTab) loadSeminars(activeTab.dataset.tab);
+            } else {
+                alert(res.message || '操作失败');
+            }
+        } catch (e) {
+            alert('网络错误');
+        }
+    }
+
+    async function adminUnblockSeminarAuthor(userId) {
+        if (!confirm('确定要解封该发起人吗？')) return;
+        try {
+            const res = await AdminAPI.unblockUser(userId);
+            if (res.code === 200) {
+                alert('发起人已解封');
                 const activeTab = document.querySelector('.sem-tab.active');
                 if (activeTab) loadSeminars(activeTab.dataset.tab);
             } else {

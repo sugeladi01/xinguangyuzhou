@@ -172,19 +172,21 @@
                         const isOwner = TokenManager.getUser() && TokenManager.getUser().id === msg.user_id;
                         const isBlocked = msg.author_is_blocked;
                         const isAuthorAdmin = msg.author_is_admin;
+                        const isMsgHidden = msg.is_hidden;
                         let adminButtons = '';
                         if (isAdmin && !isOwner && !isAuthorAdmin) {
                             if (isBlocked) {
-                                adminButtons = '<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;"><button onclick="adminDeleteMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🗑 删除留言</button><button onclick="adminUnblockUser('+msg.user_id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(80,200,120,0.2);background:rgba(80,200,120,0.06);color:#50c878;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">✓ 解封用户</button></div>';
+                                adminButtons = '<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;"><button onclick="adminDeleteMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🗑 删除</button><button onclick="adminUnblockUser('+msg.user_id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(80,200,120,0.2);background:rgba(80,200,120,0.06);color:#50c878;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">✓ 解封用户</button>'+(isMsgHidden ? '<button onclick="adminUnhideMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(80,200,120,0.2);background:rgba(80,200,120,0.06);color:#50c878;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">👁 恢复显示</button>' : '<button onclick="adminHideMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🚫 屏蔽留言</button>')+'</div>';
                             } else {
-                                adminButtons = '<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;"><button onclick="adminDeleteMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🗑 删除留言</button><button onclick="adminBlockUser('+msg.user_id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🚫 拉黑用户</button></div>';
+                                adminButtons = '<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;"><button onclick="adminDeleteMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🗑 删除</button><button onclick="adminBlockUser('+msg.user_id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🚫 拉黑用户</button>'+(isMsgHidden ? '<button onclick="adminUnhideMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(80,200,120,0.2);background:rgba(80,200,120,0.06);color:#50c878;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">👁 恢复显示</button>' : '<button onclick="adminHideMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🚫 屏蔽留言</button>')+'</div>';
                             }
                         } else if (isAdmin && isOwner) {
-                            adminButtons = '<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;"><button onclick="adminDeleteMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🗑 删除留言</button></div>';
+                            adminButtons = '<div class="msg-admin-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;"><button onclick="adminDeleteMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🗑 删除</button>'+(isMsgHidden ? '<button onclick="adminUnhideMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(80,200,120,0.2);background:rgba(80,200,120,0.06);color:#50c878;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">👁 恢复显示</button>' : '<button onclick="adminHideMessage('+msg.id+')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.72rem;cursor:pointer;font-family:\'LXGW WenKai\',sans-serif;">🚫 屏蔽留言</button>')+'</div>';
                         }
                         let badges = '';
                         if (isAuthorAdmin) badges += ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(201,168,76,0.15);color:#e0c868;margin-left:6px;">管理员</span>';
                         if (isBlocked) badges += ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(224,96,80,0.1);color:#e06050;margin-left:4px;">已拉黑</span>';
+                        if (isMsgHidden) badges += ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:6px;background:rgba(224,96,80,0.1);color:#e06050;margin-left:4px;">已屏蔽</span>';
                         return '<div class="message-item" data-message-id="'+msg.id+'"><div class="msg-author">'+(msg.nickname||'匿名')+badges+'</div><div class="msg-time">'+timeStr+'</div><div class="msg-content">'+escapeHtml(msg.content)+'</div>'+adminButtons+'</div>';
                     }).join('');
                     timeline.insertAdjacentHTML('beforeend', html);
@@ -641,6 +643,40 @@ async function adminUnblockUser(userId) {
         const res = await AdminAPI.unblockUser(userId);
         if (res.code === 200) {
             alert('用户已解封');
+            const scrollY = window.scrollY;
+            await loadMessages();
+            window.scrollTo(0, scrollY);
+        } else {
+            alert(res.message || '操作失败');
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
+}
+
+async function adminHideMessage(messageId) {
+    if (!confirm('确定要屏蔽这条留言吗？屏蔽后普通用户将看不到。')) return;
+    try {
+        const res = await MessagesAPI.toggleHide(messageId, true);
+        if (res.code === 200) {
+            alert('留言已屏蔽');
+            const scrollY = window.scrollY;
+            await loadMessages();
+            window.scrollTo(0, scrollY);
+        } else {
+            alert(res.message || '操作失败');
+        }
+    } catch (e) {
+        alert('网络错误');
+    }
+}
+
+async function adminUnhideMessage(messageId) {
+    if (!confirm('确定要恢复显示这条留言吗？')) return;
+    try {
+        const res = await MessagesAPI.toggleHide(messageId, false);
+        if (res.code === 200) {
+            alert('留言已恢复显示');
             const scrollY = window.scrollY;
             await loadMessages();
             window.scrollTo(0, scrollY);
