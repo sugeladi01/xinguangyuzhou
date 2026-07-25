@@ -8,27 +8,21 @@ const JWT_SECRET = process.env.JWT_SECRET || 'xinguang-jwt-secret-2026';
 
 const router = express.Router();
 
-// 检测 is_hidden 列是否存在（每次请求实时查询 INFORMATION_SCHEMA，避免永久缓存导致迁移后仍不生效）
+// 检测 is_hidden 列是否存在（直接尝试查询该列，避免 INFORMATION_SCHEMA 权限或数据库名不匹配问题）
 async function checkHiddenColumn() {
   try {
-    const [rows] = await db.query(
-      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'seminars' AND COLUMN_NAME = 'is_hidden'`
-    );
-    return rows[0].cnt > 0;
+    await db.query('SELECT is_hidden FROM seminars LIMIT 0');
+    return true;
   } catch (e) {
     return false;
   }
 }
 
-// 检测 category 列是否存在（每次请求实时查询，同上）
+// 检测 category 列是否存在（直接尝试查询该列，同上）
 async function checkCategoryColumn() {
   try {
-    const [rows] = await db.query(
-      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'seminars' AND COLUMN_NAME = 'category'`
-    );
-    return rows[0].cnt > 0;
+    await db.query('SELECT category FROM seminars LIMIT 0');
+    return true;
   } catch (e) {
     return false;
   }
@@ -115,7 +109,7 @@ router.get('/', async (req, res) => {
     const [seminars] = await db.query(
       `SELECT s.id, s.user_id, s.title, s.description, s.mode, s.time_display,
               s.tags, s.like_count, s.join_count, ${hiddenField} ${categoryField} s.created_at,
-              u.nickname, u.avatar
+              u.nickname, u.avatar, u.is_blocked as author_is_blocked, u.is_admin as author_is_admin
        FROM seminars s
        LEFT JOIN users u ON s.user_id = u.id
        ${whereClause}

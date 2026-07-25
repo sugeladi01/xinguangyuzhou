@@ -1,6 +1,10 @@
 const express = require('express');
 const db = require('../config/db');
 const authMiddleware = require('../middleware/auth');
+const { adminMiddleware } = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'xinguang-jwt-secret-2026';
 
 const router = express.Router();
 
@@ -8,6 +12,29 @@ const router = express.Router();
 async function getSetting(key) {
   const [rows] = await db.query("SELECT value FROM settings WHERE `key` = ?", [key]);
   return rows.length > 0 ? rows[0].value : '1'; // 默认开启
+}
+
+// 检测 messages.is_hidden 列是否存在
+async function checkHiddenColumn() {
+  try {
+    await db.query('SELECT is_hidden FROM messages LIMIT 0');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// 可选的 admin 检测（不强制要求登录）
+async function optionalAdminCheck(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
+  try {
+    const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+    const [users] = await db.query('SELECT is_admin, is_blocked FROM users WHERE id = ?', [decoded.id]);
+    return users.length > 0 && users[0].is_admin && !users[0].is_blocked;
+  } catch (e) {
+    return false;
+  }
 }
 
 // -------------------------------------------
@@ -19,16 +46,28 @@ router.get('/', async (req, res) => {
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 20));
     const offset = (page - 1) * pageSize;
 
+    const isAdmin = await optionalAdminCheck(req);
+    const canFilterHidden = await checkHiddenColumn();
+
+    // 构建过滤条件
+    let whereClause = '';
+    if (canFilterHidden && !isAdmin) {
+      whereClause = 'WHERE m.is_hidden = 0';
+    }
+
+    const hiddenField = canFilterHidden ? 'm.is_hidden,' : '0 as is_hidden,';
+
     // 查询总数
-    const [countResult] = await db.query('SELECT COUNT(*) AS total FROM messages');
+    const [countResult] = await db.query(`SELECT COUNT(*) AS total FROM messages m ${whereClause}`);
     const total = countResult[0].total;
 
     // 查询留言列表
     const [messages] = await db.query(
-      `SELECT m.id, m.user_id, m.nickname, m.content, m.created_at,
+      `SELECT m.id, m.user_id, m.nickname, m.content, ${hiddenField} m.created_at,
               u.avatar, u.is_admin as author_is_admin, u.is_blocked as author_is_blocked
        FROM messages m
        LEFT JOIN users u ON m.user_id = u.id
+       ${whereClause}
        ORDER BY m.created_at DESC
        LIMIT ? OFFSET ?`,
       [pageSize, offset]
@@ -174,6 +213,43 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       code: 500,
       message: '服务器内部错误'
     });
+  }
+});
+
+// -------------------------------------------
+// PUT /api/messages/:id/hide - 管理员切换留言屏蔽状态
+// -------------------------------------------
+router.put('/:id/hide', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const messageId = parseInt(req.params.id, 10);
+    const { hidden } = req.body;
+
+    if (isNaN(messageId)) {
+      return res.status(400).json({ code: 400, message: '无效的留言ID' });
+    }
+    if (hidden === undefined) {
+      return res.status(400).json({ code: 400, message: '缺少hidden参数' });
+    }
+
+    const canHide = await checkHiddenColumn();
+    if (!canHide) {
+      return res.status(400).json({ code: 400, message: '请先执行数据库迁移（upgrade_007.sql）' });
+    }
+
+    const [messages] = await db.query('SELECT id, nickname FROM messages WHERE id = ?', [messageId]);
+    if (messages.length === 0) {
+      return res.status(404).json({ code: 404, message: '留言不存在' });
+    }
+
+    await db.query('UPDATE messages SET is_hidden = ? WHERE id = ?', [hidden ? 1 : 0, messageId]);
+
+    res.json({
+      code: 200,
+      message: hidden ? '留言已屏蔽' : '留言已恢复显示'
+    });
+  } catch (err) {
+    console.error('[切换留言屏蔽状态错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
   }
 });
 

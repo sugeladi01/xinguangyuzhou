@@ -126,6 +126,12 @@ const MessagesAPI = {
     },
     async remove(id) {
         return apiRequest(`/api/messages/${id}`, { method: 'DELETE' });
+    },
+    async toggleHide(id, hidden) {
+        return apiRequest(`/api/messages/${id}/hide`, {
+            method: 'PUT',
+            body: JSON.stringify({ hidden })
+        });
     }
 };
 
