@@ -613,32 +613,75 @@
     // ===== 管理员状态 =====
     let isUserAdmin = false;
 
+    // 从 JWT token 中直接解码 payload（不依赖 API）
+    function decodeJwtPayload(token) {
+        try {
+            const parts = token.split('.');
+            if (parts.length !== 3) return null;
+            // base64url 解码
+            const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+            const json = atob(base64);
+            return JSON.parse(json);
+        } catch (e) {
+            return null;
+        }
+    }
+
     async function verifyAdminStatus() {
         if (!TokenManager.isLoggedIn()) {
             isUserAdmin = false;
+            console.log('[verifyAdminStatus] 未登录');
             return;
         }
+
+        // 优先从 JWT 直接解码 is_admin（不依赖网络请求）
+        const token = TokenManager.getToken();
+        const decoded = decodeJwtPayload(token);
+        if (decoded && decoded.is_admin) {
+            isUserAdmin = true;
+            const user = TokenManager.getUser() || {};
+            user.is_admin = true;
+            TokenManager.setUser(user);
+            console.log('[verifyAdminStatus] JWT 解码: is_admin=true');
+            // 仍然异步验证 API 以同步最新状态
+            try {
+                const res = await AuthAPI.getProfile();
+                if (res.code === 200 && res.data) {
+                    isUserAdmin = !!(res.data.is_admin);
+                    user.is_admin = !!res.data.is_admin;
+                    TokenManager.setUser(user);
+                    console.log('[verifyAdminStatus] API 确认: is_admin=' + isUserAdmin);
+                }
+            } catch (e) {
+                console.log('[verifyAdminStatus] API 验证失败，使用 JWT 解码结果');
+            }
+            return;
+        }
+
+        // JWT 中没有 is_admin，回退到 API 调用
+        console.log('[verifyAdminStatus] JWT 中无 is_admin，尝试 API');
         try {
             const res = await AuthAPI.getProfile();
             if (res.code === 200 && res.data) {
                 isUserAdmin = !!(res.data.is_admin);
-                // 始终同步 localStorage，无论 true/false
                 const user = TokenManager.getUser() || {};
                 user.is_admin = !!res.data.is_admin;
                 TokenManager.setUser(user);
+                console.log('[verifyAdminStatus] API 结果: is_admin=' + isUserAdmin);
             } else {
-                // API 异常，降级为 localStorage 缓存值
                 isUserAdmin = TokenManager.isAdmin();
+                console.log('[verifyAdminStatus] API 异常，回退 localStorage: is_admin=' + isUserAdmin);
             }
         } catch (e) {
-            // 网络错误，降级为 localStorage 缓存值
             isUserAdmin = TokenManager.isAdmin();
+            console.log('[verifyAdminStatus] 网络错误，回退 localStorage: is_admin=' + isUserAdmin);
         }
     }
 
     // 监听 token 过期事件，重置 admin 状态
     window.addEventListener('auth:expired', () => {
         isUserAdmin = false;
+        console.log('[auth:expired] 管理员状态已重置');
     });
 
     async function checkSettings() {
