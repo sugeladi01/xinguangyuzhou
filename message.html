@@ -594,6 +594,12 @@
                 refreshMessagePageState();
             }
         });
+
+        // ===== token 过期时刷新页面状态（重新加载列表，隐藏管理员按钮） =====
+        window.addEventListener('auth:expired', () => {
+            isUserAdmin = false;
+            loadMessages();
+        });
     </script>
 
 <script>

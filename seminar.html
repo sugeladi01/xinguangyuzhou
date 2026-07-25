@@ -678,10 +678,34 @@
         }
     }
 
-    // 监听 token 过期事件，重置 admin 状态
+    // 刷新研讨页面状态（登录/退出/恢复时调用）
+    async function refreshSeminarPageState() {
+        await verifyAdminStatus();
+        const activeTab = document.querySelector('.sem-tab.active');
+        if (activeTab) loadSeminars(activeTab.dataset.tab);
+        else loadSeminars('p-hot');
+        checkSettings();
+    }
+
+    // 监听 token 过期事件，重置 admin 状态并刷新列表
     window.addEventListener('auth:expired', () => {
         isUserAdmin = false;
-        console.log('[auth:expired] 管理员状态已重置');
+        console.log('[auth:expired] 管理员状态已重置，刷新列表');
+        refreshSeminarPageState();
+    });
+
+    // 跨页面同步：其他页面登录/退出后，localStorage 变化时自动刷新
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'xinguang_token' || e.key === 'xinguang_user') {
+            refreshSeminarPageState();
+        }
+    });
+
+    // bfcache 恢复：从浏览器前进/后退缓存恢复时重新检查状态
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+            refreshSeminarPageState();
+        }
     });
 
     async function checkSettings() {
