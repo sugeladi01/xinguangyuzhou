@@ -178,6 +178,15 @@ const SeminarsAPI = {
             method: 'POST',
             body: JSON.stringify({ content })
         });
+    },
+    async remove(id) {
+        return apiRequest(`/api/seminars/${id}`, { method: 'DELETE' });
+    },
+    async toggleHide(id, hidden) {
+        return apiRequest(`/api/seminars/${id}/hide`, {
+            method: 'PUT',
+            body: JSON.stringify({ hidden })
+        });
     }
 };
 
@@ -243,6 +252,18 @@ const SettingsAPI = {
     },
     async toggleUsernameRegister(enabled) {
         return apiRequest('/api/auth/settings/username-register-toggle', {
+            method: 'PUT',
+            body: JSON.stringify({ enabled })
+        });
+    },
+    async toggleMessageBoard(enabled) {
+        return apiRequest('/api/auth/settings/message-toggle', {
+            method: 'PUT',
+            body: JSON.stringify({ enabled })
+        });
+    },
+    async toggleSeminarCreation(enabled) {
+        return apiRequest('/api/auth/settings/seminar-toggle', {
             method: 'PUT',
             body: JSON.stringify({ enabled })
         });

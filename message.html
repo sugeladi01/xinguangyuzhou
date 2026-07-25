@@ -12,8 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=LXGW+WenKai&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=20260725">
-    <link rel="stylesheet" href="css/tools.css?v=20260725">
+    <link rel="stylesheet" href="css/style.css?v=20260726">
+    <link rel="stylesheet" href="css/tools.css?v=20260726">
 </head>
 <body>
     <canvas id="particle-canvas"></canvas>
@@ -72,7 +72,7 @@
             <div id="admin-panel" style="display:none;max-width:800px;margin:0 auto 1rem;padding:1rem;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:12px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                     <span style="font-size:0.85rem;color:#e0c868;font-weight:600;">🔧 管理员控制面板</span>
-                    <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                         <button onclick="showChangePasswordModal()" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(201,168,76,0.2);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.78rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">🔑 修改密码</button>
                         <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#b0aca4;cursor:pointer;">
                             <input type="checkbox" id="register-toggle" onchange="toggleRegisterSwitch()" style="cursor:pointer;">
@@ -81,6 +81,14 @@
                         <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#b0aca4;cursor:pointer;">
                             <input type="checkbox" id="username-register-toggle" onchange="toggleUsernameRegisterSwitch()" style="cursor:pointer;">
                             允许用户名/密码注册
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#b0aca4;cursor:pointer;">
+                            <input type="checkbox" id="message-toggle" onchange="toggleMessageBoardSwitch()" style="cursor:pointer;">
+                            允许留言
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#b0aca4;cursor:pointer;">
+                            <input type="checkbox" id="seminar-toggle" onchange="toggleSeminarCreationSwitch()" style="cursor:pointer;">
+                            允许发起研讨
                         </label>
                     </div>
                 </div>
@@ -101,8 +109,8 @@
         </div>
     </div>
 
-    <script src="js/particles.js?v=20260725"></script>
-    <script src="js/api.js?v=20260725"></script>
+    <script src="js/particles.js?v=20260726"></script>
+    <script src="js/api.js?v=20260726"></script>
     <script>
         // ===== 分页状态 =====
         let msgPage = 1;
@@ -453,21 +461,28 @@
             try {
                 const res = await SettingsAPI.getRegisterStatus();
                 if (res.code === 200) {
-                    const enabled = res.data.register_enabled;
-                    const usernameEnabled = res.data.username_register_enabled;
+                    const d = res.data;
                     const regBtn = document.getElementById('register-tab-btn');
-                    if (regBtn) {
-                        regBtn.style.display = enabled ? 'block' : 'none';
-                    }
+                    if (regBtn) regBtn.style.display = d.register_enabled ? 'block' : 'none';
                     // 同步管理员面板开关
-                    const toggle = document.getElementById('register-toggle');
-                    if (toggle) toggle.checked = enabled;
-                    const usernameToggle = document.getElementById('username-register-toggle');
-                    if (usernameToggle) usernameToggle.checked = usernameEnabled;
+                    setToggle('register-toggle', d.register_enabled);
+                    setToggle('username-register-toggle', d.username_register_enabled);
+                    setToggle('message-toggle', d.message_board_enabled);
+                    setToggle('seminar-toggle', d.seminar_creation_enabled);
+                    // 留言功能关闭时隐藏留言表单
+                    const formCard = document.getElementById('msg-form-card');
+                    if (formCard && !d.message_board_enabled) {
+                        formCard.style.display = 'none';
+                    }
                 }
             } catch (e) {
                 console.error('查询注册状态失败', e);
             }
+        }
+
+        function setToggle(id, checked) {
+            const el = document.getElementById(id);
+            if (el) el.checked = checked;
         }
 
         // ===== 切换注册开关（管理员） =====
@@ -495,6 +510,44 @@
             const enabled = toggle.checked;
             try {
                 const res = await SettingsAPI.toggleUsernameRegister(enabled);
+                if (res.code === 200) {
+                    alert(res.message);
+                    location.reload();
+                } else {
+                    alert(res.message || '操作失败');
+                    toggle.checked = !enabled;
+                }
+            } catch (e) {
+                alert('网络错误');
+                toggle.checked = !enabled;
+            }
+        }
+
+        // ===== 切换留言开关（管理员） =====
+        async function toggleMessageBoardSwitch() {
+            const toggle = document.getElementById('message-toggle');
+            const enabled = toggle.checked;
+            try {
+                const res = await SettingsAPI.toggleMessageBoard(enabled);
+                if (res.code === 200) {
+                    alert(res.message);
+                    location.reload();
+                } else {
+                    alert(res.message || '操作失败');
+                    toggle.checked = !enabled;
+                }
+            } catch (e) {
+                alert('网络错误');
+                toggle.checked = !enabled;
+            }
+        }
+
+        // ===== 切换发起研讨开关（管理员） =====
+        async function toggleSeminarCreationSwitch() {
+            const toggle = document.getElementById('seminar-toggle');
+            const enabled = toggle.checked;
+            try {
+                const res = await SettingsAPI.toggleSeminarCreation(enabled);
                 if (res.code === 200) {
                     alert(res.message);
                     location.reload();

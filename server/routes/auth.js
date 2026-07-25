@@ -466,26 +466,27 @@ router.put('/users/:id/unblock', authMiddleware, adminMiddleware, async (req, re
 });
 
 // -------------------------------------------
-// GET /api/auth/settings/register-status - 获取注册开关状态（公开接口）
+// GET /api/auth/settings/register-status - 获取所有开关状态（公开接口）
 // -------------------------------------------
 router.get('/settings/register-status', async (req, res) => {
   try {
     const [settings] = await db.query(
-      "SELECT `key`, value FROM settings WHERE `key` IN ('register_enabled', 'username_register_enabled')"
+      "SELECT `key`, value FROM settings WHERE `key` IN ('register_enabled', 'username_register_enabled', 'message_board_enabled', 'seminar_creation_enabled')"
     );
     const map = {};
     for (const row of settings) {
       map[row.key] = row.value;
     }
-    const registerEnabled = map['register_enabled'] ? map['register_enabled'] === '1' : true;
-    const usernameRegisterEnabled = map['username_register_enabled'] ? map['username_register_enabled'] === '1' : true;
+    const getBool = (key) => map[key] ? map[key] === '1' : true;
 
     res.json({
       code: 200,
       message: 'success',
       data: {
-        register_enabled: registerEnabled,
-        username_register_enabled: usernameRegisterEnabled
+        register_enabled: getBool('register_enabled'),
+        username_register_enabled: getBool('username_register_enabled'),
+        message_board_enabled: getBool('message_board_enabled'),
+        seminar_creation_enabled: getBool('seminar_creation_enabled')
       }
     });
   } catch (err) {
@@ -544,6 +545,60 @@ router.put('/settings/username-register-toggle', authMiddleware, adminMiddleware
     });
   } catch (err) {
     console.error('[切换用户名注册开关错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// -------------------------------------------
+// PUT /api/auth/settings/message-toggle - 管理员切换留言功能开关
+// -------------------------------------------
+router.put('/settings/message-toggle', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+
+    if (enabled === undefined) {
+      return res.status(400).json({ code: 400, message: '缺少enabled参数' });
+    }
+
+    const value = enabled ? '1' : '0';
+    await db.query(
+      "INSERT INTO settings (`key`, value) VALUES ('message_board_enabled', ?) ON DUPLICATE KEY UPDATE value = ?",
+      [value, value]
+    );
+
+    res.json({
+      code: 200,
+      message: enabled ? '留言功能已开启' : '留言功能已关闭'
+    });
+  } catch (err) {
+    console.error('[切换留言开关错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// -------------------------------------------
+// PUT /api/auth/settings/seminar-toggle - 管理员切换发起研讨开关
+// -------------------------------------------
+router.put('/settings/seminar-toggle', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+
+    if (enabled === undefined) {
+      return res.status(400).json({ code: 400, message: '缺少enabled参数' });
+    }
+
+    const value = enabled ? '1' : '0';
+    await db.query(
+      "INSERT INTO settings (`key`, value) VALUES ('seminar_creation_enabled', ?) ON DUPLICATE KEY UPDATE value = ?",
+      [value, value]
+    );
+
+    res.json({
+      code: 200,
+      message: enabled ? '发起研讨功能已开启' : '发起研讨功能已关闭'
+    });
+  } catch (err) {
+    console.error('[切换研讨开关错误]', err);
     res.status(500).json({ code: 500, message: '服务器内部错误' });
   }
 });

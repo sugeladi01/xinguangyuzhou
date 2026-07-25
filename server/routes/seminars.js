@@ -1,11 +1,35 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const authMiddleware = require('../middleware/auth');
+const { adminMiddleware } = require('../middleware/auth');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'xinguang-jwt-secret-2026';
 
 const router = express.Router();
 
+// 可选的 admin 检测（不强制要求登录，仅判断当前用户是否为管理员）
+async function optionalAdminCheck(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
+  try {
+    const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+    const [users] = await db.query('SELECT is_admin FROM users WHERE id = ?', [decoded.id]);
+    return users.length > 0 && users[0].is_admin;
+  } catch (e) {
+    return false;
+  }
+}
+
+// 查询设置值
+async function getSetting(key) {
+  const [rows] = await db.query("SELECT value FROM settings WHERE `key` = ?", [key]);
+  return rows.length > 0 ? rows[0].value : '1'; // 默认开启
+}
+
 // -------------------------------------------
 // GET /api/seminars - 获取研讨话题列表（支持tab筛选）
+// 管理员可看到被屏蔽的话题，普通用户只能看到正常话题
 // -------------------------------------------
 router.get('/', async (req, res) => {
   try {
@@ -14,7 +38,12 @@ router.get('/', async (req, res) => {
     const offset = (page - 1) * pageSize;
     const tab = req.query.tab || ''; // 热门/最新/线上/线下
 
+    const isAdmin = await optionalAdminCheck(req);
+
     let whereClause = '';
+    if (!isAdmin) {
+      whereClause = 'WHERE s.is_hidden = 0';
+    }
     let orderBy = 's.created_at DESC';
     const params = [];
 
@@ -23,10 +52,14 @@ router.get('/', async (req, res) => {
     } else if (tab === '最新') {
       orderBy = 's.created_at DESC';
     } else if (tab === '线上') {
-      whereClause = 'WHERE s.mode = ?';
+      whereClause = whereClause
+        ? `${whereClause} AND s.mode = ?`
+        : 'WHERE s.mode = ?';
       params.push('线上');
     } else if (tab === '线下') {
-      whereClause = 'WHERE s.mode = ?';
+      whereClause = whereClause
+        ? `${whereClause} AND s.mode = ?`
+        : 'WHERE s.mode = ?';
       params.push('线下');
     }
 
@@ -40,7 +73,7 @@ router.get('/', async (req, res) => {
     // 查询话题列表
     const [seminars] = await db.query(
       `SELECT s.id, s.user_id, s.title, s.description, s.mode, s.time_display,
-              s.tags, s.like_count, s.join_count, s.created_at,
+              s.tags, s.like_count, s.join_count, s.is_hidden, s.created_at,
               u.nickname, u.avatar
        FROM seminars s
        LEFT JOIN users u ON s.user_id = u.id
@@ -134,9 +167,18 @@ router.get('/:id', async (req, res) => {
 
 // -------------------------------------------
 // POST /api/seminars - 发布话题（需认证）
+// 检查 seminar_creation_enabled 设置
 // -------------------------------------------
 router.post('/', authMiddleware, async (req, res) => {
   try {
+    // 检查是否允许发起研讨
+    const creationEnabled = await getSetting('seminar_creation_enabled');
+    if (creationEnabled === '0' && !req.user.is_admin) {
+      return res.status(403).json({
+        code: 403,
+        message: '管理员已关闭发起研讨功能'
+      });
+    }
     const { title, description, mode, time_display, tags } = req.body;
 
     // 参数校验
@@ -401,6 +443,65 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
       code: 500,
       message: '服务器内部错误'
     });
+  }
+});
+
+// -------------------------------------------
+// DELETE /api/seminars/:id - 管理员删除研讨话题
+// -------------------------------------------
+router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const seminarId = parseInt(req.params.id, 10);
+
+    if (isNaN(seminarId)) {
+      return res.status(400).json({ code: 400, message: '无效的话题ID' });
+    }
+
+    const [seminars] = await db.query('SELECT id FROM seminars WHERE id = ?', [seminarId]);
+    if (seminars.length === 0) {
+      return res.status(404).json({ code: 404, message: '话题不存在' });
+    }
+
+    // 级联删除评论
+    await db.query('DELETE FROM seminar_comments WHERE seminar_id = ?', [seminarId]);
+    await db.query('DELETE FROM seminars WHERE id = ?', [seminarId]);
+
+    res.json({ code: 200, message: '研讨话题已删除' });
+  } catch (err) {
+    console.error('[删除研讨话题错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// -------------------------------------------
+// PUT /api/seminars/:id/hide - 管理员切换研讨屏蔽状态
+// -------------------------------------------
+router.put('/:id/hide', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const seminarId = parseInt(req.params.id, 10);
+    const { hidden } = req.body;
+
+    if (isNaN(seminarId)) {
+      return res.status(400).json({ code: 400, message: '无效的话题ID' });
+    }
+    if (hidden === undefined) {
+      return res.status(400).json({ code: 400, message: '缺少hidden参数' });
+    }
+
+    const [seminars] = await db.query('SELECT id, title FROM seminars WHERE id = ?', [seminarId]);
+    if (seminars.length === 0) {
+      return res.status(404).json({ code: 404, message: '话题不存在' });
+    }
+
+    await db.query('UPDATE seminars SET is_hidden = ? WHERE id = ?', [hidden ? 1 : 0, seminarId]);
+
+    res.json({
+      code: 200,
+      message: hidden ? '研讨已屏蔽' : '研讨已恢复显示'
+    });
+  } catch (err) {
+    console.error('[切换研讨屏蔽状态错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
   }
 });
 

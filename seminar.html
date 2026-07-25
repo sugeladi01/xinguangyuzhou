@@ -608,8 +608,40 @@
 
     </div><!-- /sem-container -->
 
-    <script src="js/api.js"></script>
+    <script src="js/api.js?v=20260726"></script>
     <script>
+    // ===== 管理员状态 =====
+    let isUserAdmin = false;
+
+    async function verifyAdminStatus() {
+        if (!TokenManager.isLoggedIn()) {
+            isUserAdmin = false;
+            return;
+        }
+        try {
+            const res = await AuthAPI.getProfile();
+            if (res.code === 200 && res.data) {
+                isUserAdmin = !!(res.data.is_admin);
+            } else {
+                isUserAdmin = false;
+            }
+        } catch (e) {
+            isUserAdmin = TokenManager.isAdmin();
+        }
+    }
+
+    async function checkSettings() {
+        try {
+            const res = await SettingsAPI.getRegisterStatus();
+            if (res.code === 200) {
+                const publishBtn = document.getElementById('publishBtn');
+                if (publishBtn && !res.data.seminar_creation_enabled) {
+                    publishBtn.style.display = 'none';
+                }
+            }
+        } catch (e) { /* ignore */ }
+    }
+
     // ===== DATA STORE =====
     const store = {};
     let allSeminars = []; // 缓存所有研讨数据
@@ -684,6 +716,7 @@
             <div class="s-card-top">
                 <span class="s-mode ${modeClass}">${modeIcon}</span>
                 <span class="s-time"><i class="far fa-clock"></i> ${escapeHtml(timeDisplay)}</span>
+                ${sem.is_hidden ? '<span style="font-size:0.65rem;padding:2px 8px;border-radius:6px;background:rgba(224,96,80,0.1);color:#e06050;margin-left:8px;">已屏蔽</span>' : ''}
             </div>
             <div class="s-card-body">
                 <div class="s-card-title">${escapeHtml(sem.title)}</div>
@@ -696,7 +729,14 @@
                     <span class="s-act" data-type="comment"><i class="fas fa-comment"></i> <span class="s-act-num">0</span></span>
                     ${!isCollab ? '' : `<span class="s-act"><i class="fas fa-eye"></i> <span class="s-act-num">${sem.read_count || 0}</span></span>`}
                 </div>
-            </div>`;
+            </div>
+            ${isUserAdmin ? `<div class="s-admin-actions" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(201,168,76,0.08);display:flex;gap:8px;justify-content:flex-end;">
+                ${sem.is_hidden
+                    ? `<button onclick="event.stopPropagation();adminUnhideSeminar(${sem.id})" style="padding:3px 10px;border-radius:8px;border:1px solid rgba(80,200,120,0.2);background:rgba(80,200,120,0.06);color:#50c878;font-size:0.7rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">恢复显示</button>`
+                    : `<button onclick="event.stopPropagation();adminHideSeminar(${sem.id})" style="padding:3px 10px;border-radius:8px;border:1px solid rgba(201,168,76,0.15);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.7rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">屏蔽</button>`
+                }
+                <button onclick="event.stopPropagation();adminDeleteSeminar(${sem.id})" style="padding:3px 10px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:rgba(224,96,80,0.06);color:#e06050;font-size:0.7rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;">删除</button>
+            </div>` : ''}`;
 
         // 绑定事件
         initCardEvents(card, 's' + sem.id);
@@ -1026,8 +1066,63 @@
         });
     }
 
+    // ===== 管理员操作 =====
+    async function adminDeleteSeminar(id) {
+        if (!confirm('确定要删除这个研讨话题吗？')) return;
+        try {
+            const res = await SeminarsAPI.remove(id);
+            if (res.code === 200) {
+                alert('研讨已删除');
+                // 从 DOM 中移除卡片
+                const card = document.querySelector(`.s-card[data-id="${id}"]`);
+                if (card) {
+                    gsap.to(card, { opacity: 0, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.3, onComplete: () => card.remove() });
+                }
+            } else {
+                alert(res.message || '删除失败');
+            }
+        } catch (e) {
+            alert('网络错误');
+        }
+    }
+
+    async function adminHideSeminar(id) {
+        if (!confirm('确定要屏蔽这个研讨话题吗？屏蔽后普通用户将看不到。')) return;
+        try {
+            const res = await SeminarsAPI.toggleHide(id, true);
+            if (res.code === 200) {
+                alert('研讨已屏蔽');
+                // 重新加载当前 tab
+                const activeTab = document.querySelector('.sem-tab.active');
+                if (activeTab) loadSeminars(activeTab.dataset.tab);
+            } else {
+                alert(res.message || '操作失败');
+            }
+        } catch (e) {
+            alert('网络错误');
+        }
+    }
+
+    async function adminUnhideSeminar(id) {
+        if (!confirm('确定要恢复显示这个研讨话题吗？')) return;
+        try {
+            const res = await SeminarsAPI.toggleHide(id, false);
+            if (res.code === 200) {
+                alert('研讨已恢复显示');
+                const activeTab = document.querySelector('.sem-tab.active');
+                if (activeTab) loadSeminars(activeTab.dataset.tab);
+            } else {
+                alert(res.message || '操作失败');
+            }
+        } catch (e) {
+            alert('网络错误');
+        }
+    }
+
     // ===== BOOT =====
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        await verifyAdminStatus();
+        checkSettings();
         initTabs();
         initTimePicker();
         initPublishModal();

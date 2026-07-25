@@ -4,6 +4,12 @@ const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
+// 查询设置值
+async function getSetting(key) {
+  const [rows] = await db.query("SELECT value FROM settings WHERE `key` = ?", [key]);
+  return rows.length > 0 ? rows[0].value : '1'; // 默认开启
+}
+
 // -------------------------------------------
 // GET /api/messages - 获取留言列表（分页，最新在前）
 // -------------------------------------------
@@ -52,9 +58,18 @@ router.get('/', async (req, res) => {
 
 // -------------------------------------------
 // POST /api/messages - 发布留言（需认证）
+// 检查 message_board_enabled 设置
 // -------------------------------------------
 router.post('/', authMiddleware, async (req, res) => {
   try {
+    // 检查留言功能是否开启（管理员不受限制）
+    const boardEnabled = await getSetting('message_board_enabled');
+    if (boardEnabled === '0' && !req.user.is_admin) {
+      return res.status(403).json({
+        code: 403,
+        message: '管理员已关闭留言功能'
+      });
+    }
     const { content } = req.body;
 
     // 参数校验
