@@ -53,6 +53,8 @@ async function apiRequest(path, options = {}) {
             // Token 过期或无效
             TokenManager.removeToken();
             TokenManager.removeUser();
+            // 通知所有页面重置 admin 状态
+            window.dispatchEvent(new CustomEvent('auth:expired'));
         }
         return data;
     } catch (err) {

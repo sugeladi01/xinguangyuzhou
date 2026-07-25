@@ -40,8 +40,8 @@ async function optionalAdminCheck(req) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
   try {
     const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
-    const [users] = await db.query('SELECT is_admin FROM users WHERE id = ?', [decoded.id]);
-    return users.length > 0 && users[0].is_admin;
+    const [users] = await db.query('SELECT is_admin, is_blocked FROM users WHERE id = ?', [decoded.id]);
+    return users.length > 0 && users[0].is_admin && !users[0].is_blocked;
   } catch (e) {
     return false;
   }

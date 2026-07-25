@@ -614,34 +614,32 @@
     let isUserAdmin = false;
 
     async function verifyAdminStatus() {
-        // 先快速检查 localStorage 缓存（不依赖网络）
-        const localAdmin = TokenManager.isAdmin();
-        if (localAdmin) {
-            isUserAdmin = true;
-        }
         if (!TokenManager.isLoggedIn()) {
-            isUserAdmin = localAdmin;
+            isUserAdmin = false;
             return;
         }
         try {
             const res = await AuthAPI.getProfile();
             if (res.code === 200 && res.data) {
                 isUserAdmin = !!(res.data.is_admin);
-                // 同步更新 localStorage 缓存
-                if (res.data.is_admin) {
-                    const user = TokenManager.getUser() || {};
-                    user.is_admin = true;
-                    TokenManager.setUser(user);
-                }
+                // 始终同步 localStorage，无论 true/false
+                const user = TokenManager.getUser() || {};
+                user.is_admin = !!res.data.is_admin;
+                TokenManager.setUser(user);
             } else {
-                // API 返回异常（如 401 触发 localStorage 被清空），不覆盖已确认的 admin 状态
-                if (!isUserAdmin) isUserAdmin = TokenManager.isAdmin();
+                // API 异常，降级为 localStorage 缓存值
+                isUserAdmin = TokenManager.isAdmin();
             }
         } catch (e) {
-            // 网络错误，不覆盖已确认的 admin 状态
-            if (!isUserAdmin) isUserAdmin = TokenManager.isAdmin();
+            // 网络错误，降级为 localStorage 缓存值
+            isUserAdmin = TokenManager.isAdmin();
         }
     }
+
+    // 监听 token 过期事件，重置 admin 状态
+    window.addEventListener('auth:expired', () => {
+        isUserAdmin = false;
+    });
 
     async function checkSettings() {
         try {
