@@ -8,6 +8,20 @@ const JWT_SECRET = process.env.JWT_SECRET || 'xinguang-jwt-secret-2026';
 
 const router = express.Router();
 
+// 缓存 is_hidden 列是否存在（首次请求时检测，之后复用）
+let hasHiddenColumn = null;
+
+async function checkHiddenColumn() {
+  if (hasHiddenColumn !== null) return hasHiddenColumn;
+  try {
+    await db.query('SELECT is_hidden FROM seminars LIMIT 1');
+    hasHiddenColumn = true;
+  } catch (e) {
+    hasHiddenColumn = false;
+  }
+  return hasHiddenColumn;
+}
+
 // 可选的 admin 检测（不强制要求登录，仅判断当前用户是否为管理员）
 async function optionalAdminCheck(req) {
   const authHeader = req.headers.authorization;
@@ -39,9 +53,11 @@ router.get('/', async (req, res) => {
     const tab = req.query.tab || ''; // 热门/最新/线上/线下
 
     const isAdmin = await optionalAdminCheck(req);
+    const canFilterHidden = await checkHiddenColumn();
 
     let whereClause = '';
-    if (!isAdmin) {
+    // 仅当列存在 且 非管理员 时，过滤被屏蔽的话题
+    if (canFilterHidden && !isAdmin) {
       whereClause = 'WHERE s.is_hidden = 0';
     }
     let orderBy = 's.created_at DESC';
@@ -70,10 +86,11 @@ router.get('/', async (req, res) => {
     );
     const total = countResult[0].total;
 
-    // 查询话题列表
+    // 查询话题列表（列不存在时跳过 is_hidden）
+    const hiddenField = canFilterHidden ? 's.is_hidden,' : '0 as is_hidden,';
     const [seminars] = await db.query(
       `SELECT s.id, s.user_id, s.title, s.description, s.mode, s.time_display,
-              s.tags, s.like_count, s.join_count, s.is_hidden, s.created_at,
+              s.tags, s.like_count, s.join_count, ${hiddenField} s.created_at,
               u.nickname, u.avatar
        FROM seminars s
        LEFT JOIN users u ON s.user_id = u.id
@@ -486,6 +503,11 @@ router.put('/:id/hide', authMiddleware, adminMiddleware, async (req, res) => {
     }
     if (hidden === undefined) {
       return res.status(400).json({ code: 400, message: '缺少hidden参数' });
+    }
+
+    const canHide = await checkHiddenColumn();
+    if (!canHide) {
+      return res.status(400).json({ code: 400, message: '请先执行数据库迁移（upgrade_004.sql）' });
     }
 
     const [seminars] = await db.query('SELECT id, title FROM seminars WHERE id = ?', [seminarId]);
