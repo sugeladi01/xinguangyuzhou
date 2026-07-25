@@ -66,6 +66,18 @@ app.use('/api/seminars', require('./routes/seminars'));
 app.use('/api/goals', require('./routes/goals'));
 
 // ============================================
+// 静态文件服务
+// ============================================
+app.use(express.static(path.join(__dirname, '..'), {
+  index: false,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
+
+// ============================================
 // 404 处理
 // ============================================
 app.use((req, res) => {
