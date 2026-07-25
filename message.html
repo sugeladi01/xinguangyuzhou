@@ -12,8 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=LXGW+WenKai&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=20260724">
-    <link rel="stylesheet" href="css/tools.css?v=20260724">
+    <link rel="stylesheet" href="css/style.css?v=20260725">
+    <link rel="stylesheet" href="css/tools.css?v=20260725">
 </head>
 <body>
     <canvas id="particle-canvas"></canvas>
@@ -28,6 +28,14 @@
             <a class="nav-link" href="tools.html"><i class="fas fa-tools"></i> 工具</a>
             <a class="nav-link" href="seminar.html"><i class="fas fa-comments"></i> 研讨</a>
             <a class="nav-link active" href="message.html"><i class="fas fa-paper-plane"></i> 留言</a>
+            <div class="nav-divider"></div>
+            <div class="nav-account" id="nav-account" style="display:flex;align-items:center;gap:8px;">
+                <button id="nav-login-btn" onclick="showLoginModal()" style="padding:5px 14px;border-radius:10px;border:1px solid rgba(201,168,76,0.2);background:rgba(201,168,76,0.06);color:#e0c868;font-size:0.78rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;white-space:nowrap;">登录</button>
+                <div id="nav-user-info" style="display:none;align-items:center;gap:6px;">
+                    <span id="nav-user-name" style="color:#e0c868;font-size:0.78rem;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                    <button onclick="msgHandleLogout()" style="padding:3px 8px;border-radius:8px;border:1px solid rgba(224,96,80,0.2);background:transparent;color:#e06050;font-size:0.72rem;cursor:pointer;font-family:'LXGW WenKai',sans-serif;white-space:nowrap;">退出</button>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -70,6 +78,10 @@
                             <input type="checkbox" id="register-toggle" onchange="toggleRegisterSwitch()" style="cursor:pointer;">
                             允许新用户注册
                         </label>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#b0aca4;cursor:pointer;">
+                            <input type="checkbox" id="username-register-toggle" onchange="toggleUsernameRegisterSwitch()" style="cursor:pointer;">
+                            允许用户名/密码注册
+                        </label>
                     </div>
                 </div>
             </div>
@@ -89,8 +101,8 @@
         </div>
     </div>
 
-    <script src="js/particles.js?v=20260724"></script>
-    <script src="js/api.js?v=20260724"></script>
+    <script src="js/particles.js?v=20260725"></script>
+    <script src="js/api.js?v=20260725"></script>
     <script>
         // ===== 分页状态 =====
         let msgPage = 1;
@@ -211,14 +223,42 @@
             const user = TokenManager.getUser();
             const loginHint = document.getElementById('msg-login-hint');
             const nameGroup = document.getElementById('msg-name-group');
-            if (user) {
-                loginHint.style.display = 'none';
-                nameGroup.style.display = 'none';
-                document.getElementById('msg-name').value = user.nickname || user.username || '';
-            } else {
-                loginHint.style.display = 'block';
-                nameGroup.style.display = 'block';
+            if (loginHint && nameGroup) {
+                if (user) {
+                    loginHint.style.display = 'none';
+                    nameGroup.style.display = 'none';
+                } else {
+                    loginHint.style.display = 'block';
+                    nameGroup.style.display = 'block';
+                }
             }
+            // 同步更新导航栏账户状态
+            updateNavAccount();
+        }
+
+        // ===== 更新导航栏账户状态 =====
+        function updateNavAccount() {
+            const user = TokenManager.getUser();
+            const loginBtn = document.getElementById('nav-login-btn');
+            const userInfo = document.getElementById('nav-user-info');
+            const userName = document.getElementById('nav-user-name');
+            if (!loginBtn || !userInfo) return;
+            if (user) {
+                loginBtn.style.display = 'none';
+                userInfo.style.display = 'flex';
+                if (userName) userName.textContent = user.nickname || user.username || '';
+            } else {
+                loginBtn.style.display = 'inline-block';
+                userInfo.style.display = 'none';
+            }
+        }
+
+        // ===== 退出登录（留言板页面专用） =====
+        function msgHandleLogout() {
+            AuthAPI.logout();
+            updateMsgLoginState();
+            // 刷新整个页面状态
+            refreshMessagePageState();
         }
 
         // ===== 登录弹窗 =====
@@ -369,8 +409,10 @@
             }
 
             if (res.code === 200 || res.code === 201) {
+                // 立即更新登录状态（不等 setTimeout）
+                updateMsgLoginState();
                 document.getElementById('login-modal').remove();
-                // 统一刷新留言区所有状态（登录提示、管理员面板、留言列表）
+                // 异步刷新完整状态（消息列表、管理员面板等）
                 setTimeout(() => refreshMessagePageState(), 50);
             } else {
                 errorEl.textContent = res.message || '操作失败，请重试';
@@ -411,6 +453,7 @@
                 const res = await SettingsAPI.getRegisterStatus();
                 if (res.code === 200) {
                     const enabled = res.data.register_enabled;
+                    const usernameEnabled = res.data.username_register_enabled;
                     const regBtn = document.getElementById('register-tab-btn');
                     if (regBtn) {
                         regBtn.style.display = enabled ? 'block' : 'none';
@@ -418,6 +461,8 @@
                     // 同步管理员面板开关
                     const toggle = document.getElementById('register-toggle');
                     if (toggle) toggle.checked = enabled;
+                    const usernameToggle = document.getElementById('username-register-toggle');
+                    if (usernameToggle) usernameToggle.checked = usernameEnabled;
                 }
             } catch (e) {
                 console.error('查询注册状态失败', e);
@@ -432,7 +477,25 @@
                 const res = await SettingsAPI.toggleRegister(enabled);
                 if (res.code === 200) {
                     alert(res.message);
-                    // 刷新页面以应用新状态
+                    location.reload();
+                } else {
+                    alert(res.message || '操作失败');
+                    toggle.checked = !enabled;
+                }
+            } catch (e) {
+                alert('网络错误');
+                toggle.checked = !enabled;
+            }
+        }
+
+        // ===== 切换用户名/密码注册开关（管理员） =====
+        async function toggleUsernameRegisterSwitch() {
+            const toggle = document.getElementById('username-register-toggle');
+            const enabled = toggle.checked;
+            try {
+                const res = await SettingsAPI.toggleUsernameRegister(enabled);
+                if (res.code === 200) {
+                    alert(res.message);
                     location.reload();
                 } else {
                     alert(res.message || '操作失败');
@@ -462,11 +525,9 @@
         // ===== 初始化：页面首次加载 =====
         document.addEventListener('DOMContentLoaded', () => refreshMessagePageState());
 
-        // ===== bfcache 恢复：从浏览器前进/后退缓存恢复时重新检查状态 =====
-        window.addEventListener('pageshow', (event) => {
-            if (event.persisted) {
-                refreshMessagePageState();
-            }
+        // ===== bfcache 恢复 & 页面切换：始终重新检查登录状态 =====
+        window.addEventListener('pageshow', () => {
+            refreshMessagePageState();
         });
 
         // ===== 跨页面同步：其他页面登录/退出后，localStorage 变化时自动刷新 =====

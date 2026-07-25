@@ -240,5 +240,11 @@ const SettingsAPI = {
             method: 'PUT',
             body: JSON.stringify({ enabled })
         });
+    },
+    async toggleUsernameRegister(enabled) {
+        return apiRequest('/api/auth/settings/username-register-toggle', {
+            method: 'PUT',
+            body: JSON.stringify({ enabled })
+        });
     }
 };

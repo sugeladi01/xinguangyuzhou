@@ -18,12 +18,22 @@ router.post('/register', async (req, res) => {
   try {
     // 检查是否允许注册
     const [settings] = await db.query(
-      "SELECT value FROM settings WHERE `key` = 'register_enabled'"
+      "SELECT `key`, value FROM settings WHERE `key` IN ('register_enabled', 'username_register_enabled')"
     );
-    if (settings.length > 0 && settings[0].value === '0') {
+    const settingMap = {};
+    for (const row of settings) {
+      settingMap[row.key] = row.value;
+    }
+    if (settingMap['register_enabled'] === '0') {
       return res.status(403).json({
         code: 403,
         message: '管理员已关闭注册功能'
+      });
+    }
+    if (settingMap['username_register_enabled'] === '0') {
+      return res.status(403).json({
+        code: 403,
+        message: '管理员已关闭用户名/密码注册，请使用邮箱注册'
       });
     }
 
@@ -461,14 +471,22 @@ router.put('/users/:id/unblock', authMiddleware, adminMiddleware, async (req, re
 router.get('/settings/register-status', async (req, res) => {
   try {
     const [settings] = await db.query(
-      "SELECT value FROM settings WHERE `key` = 'register_enabled'"
+      "SELECT `key`, value FROM settings WHERE `key` IN ('register_enabled', 'username_register_enabled')"
     );
-    const enabled = settings.length > 0 ? settings[0].value === '1' : true;
+    const map = {};
+    for (const row of settings) {
+      map[row.key] = row.value;
+    }
+    const registerEnabled = map['register_enabled'] ? map['register_enabled'] === '1' : true;
+    const usernameRegisterEnabled = map['username_register_enabled'] ? map['username_register_enabled'] === '1' : true;
 
     res.json({
       code: 200,
       message: 'success',
-      data: { register_enabled: enabled }
+      data: {
+        register_enabled: registerEnabled,
+        username_register_enabled: usernameRegisterEnabled
+      }
     });
   } catch (err) {
     console.error('[获取注册状态错误]', err);
@@ -499,6 +517,33 @@ router.put('/settings/register-toggle', authMiddleware, adminMiddleware, async (
     });
   } catch (err) {
     console.error('[切换注册开关错误]', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// -------------------------------------------
+// PUT /api/auth/settings/username-register-toggle - 管理员切换用户名/密码注册开关
+// -------------------------------------------
+router.put('/settings/username-register-toggle', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+
+    if (enabled === undefined) {
+      return res.status(400).json({ code: 400, message: '缺少enabled参数' });
+    }
+
+    const value = enabled ? '1' : '0';
+    await db.query(
+      "INSERT INTO settings (`key`, value) VALUES ('username_register_enabled', ?) ON DUPLICATE KEY UPDATE value = ?",
+      [value, value]
+    );
+
+    res.json({
+      code: 200,
+      message: enabled ? '用户名/密码注册功能已开启' : '用户名/密码注册功能已关闭'
+    });
+  } catch (err) {
+    console.error('[切换用户名注册开关错误]', err);
     res.status(500).json({ code: 500, message: '服务器内部错误' });
   }
 });
