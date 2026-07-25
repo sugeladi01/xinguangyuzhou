@@ -15,6 +15,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
   origin: [
     'https://liuxuan.netlify.app',
+    'https://a1b2.tech',
+    'http://a1b2.tech',
     'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:8080',
